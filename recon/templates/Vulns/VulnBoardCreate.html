@@ -1,0 +1,37 @@
+{% extends 'Template_base.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}
+            <h1>VulnBoard</h1>
+{% endblock %}
+{% block content %}
+        <div class="VulnCardDisplayGrid">
+<h2>Mantis Vulns</h2>
+            {% for res in mantis %}
+            <p>
+                <a href="/VulnBoard/create/{{ res.id}}">{{ res.id}}</a></br>
+                {{ res.name}}</br>
+                {{ res.vulnClass}}</br>
+                {{ res.severity}}</br>
+                <form action="/VulnBoard/create/delete/{{ res.id}}" method="GET">
+                    {% csrf_token %}
+                    <input type="hidden" name="_method" value="delete">
+                    <input type="submit" value="Delete">
+                </form>
+            </p>
+            {% endfor %}
+        </div>
+
+        <div class="VulnCreationGrid">
+            <form action="{% url 'VulnBoardCreate' %}" method="post">
+                {% csrf_token %}
+
+                {{ form.as_p }}
+                <input type="submit" value="OK">
+
+            </form>
+        </div>
+
+    </div>
+{% endblock %}

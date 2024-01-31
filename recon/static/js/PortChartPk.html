@@ -1,0 +1,57 @@
+﻿{% extends 'base.html'%}
+
+{%block scripts%}
+
+    <script>
+function getRandomColor() { //generates random colours and puts them in string
+  var colors = [];
+  for (var i = 0; i < 3; i++) {
+    var letters = '0123456789ABCDEF'.split('');
+    var color = '#';
+    for (var x = 0; x < 6; x++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    colors.push(color);
+  }
+  return colors;
+}
+        $(function () {
+
+            var $PortChartPk = $("#PortChartPk");
+            $.ajax({
+                url: $PortChartPk.data("url"),
+                success: function (data) {
+
+                    var ctx = $PortChartPk[0].getContext("2d");
+
+                    new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: [{%for L in data.labels%} {{L}},{%endfor%}],
+
+                            datasets: [
+                    
+]
+                        },
+                        options: {
+
+                            responsive: true,
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Port Distrobution'
+                            }
+                        }
+                    });
+
+                }
+            });
+
+        });
+
+    </script>
+
+
+{%endblock scripts%}

@@ -1,0 +1,45 @@
+{% extends 'Template_base.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}
+            <h1>Customers</h1>
+{% endblock %}
+
+{% block content %}
+<form action="{% url 'VulnBoards' %}" method="get">
+  <input name="q" type="text" placeholder="Search...">
+</form>
+        <div class="vulnsGrid">
+            <div id="container" style="width: 500px; height: 500px;">
+                <canvas id="VulnsBoardChart" data-url="{% url 'VulnsBoardChart' %}"></canvas>
+            </div>
+            {% for tv in Template %}
+            <span><b>Name</b>  {{tv.info.name}}</span><span>   <b>Date</b>   {{tv.date}}</span></br>
+            <span style="font-size: 20px"><b>Severity</b>: {{tv.info.severity}}</span><span style="font-size: 14px">{{tv.info.classification.4}}</span></br>
+            <span style="font-size: 10px"><b>author</b>{{tv.info.author}}</span></br>
+            <span>Location: <a href="{{tv.matched_at}}">{{tv.matched_at}}</a></span></br>
+            {{tv.info.tags}}</br>
+            <b>description</b>
+            {{tv.info.description}}</br>
+            <hr style="border: 10px solid green;">
+            {% endfor %}
+{% for vuln in Vulns %}
+            <a href="/VulnBoard/{{vuln.id}}">{{vuln.id}}</a></br>
+            {{vuln.name}}</br>
+{{vuln.date}}</br>
+            {{vuln.vulnClass}}</br>
+            {{vuln.severity}}</br>
+            </br>
+            {% for n in vuln.location %}
+            <a href="{{n}}">{{n}}</a></br>
+            {% endfor %}
+            {% if vuln.match_headers%}
+            {{vuln.matchedAt_headers}}</br>
+            {% endif %}
+            {{vuln.match_bodys}}</br>
+            {{vuln.matchedAt_bodys}}</br>
+            {{tv.info.reference}}</br>
+<hr style="border: 10px solid green;">
+{% endfor %}
+{% endblock %}

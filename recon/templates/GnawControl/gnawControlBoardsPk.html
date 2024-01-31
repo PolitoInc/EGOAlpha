@@ -1,0 +1,17 @@
+﻿{% extends 'Template_pk.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}
+                <h1>Nuclei ControlBoard</h1>
+{% endblock %}
+{% block customer_records %}
+            <div class="PK_update">
+                <form action="{% url 'GnawControlBoardsPK' control.id %}" method="post">
+                    {% csrf_token %}
+                    {{form.as_p }}
+                    <input type="submit" value="Submit">
+                </form>
+            </div>
+
+{% endblock %}

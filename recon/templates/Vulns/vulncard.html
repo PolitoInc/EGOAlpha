@@ -1,0 +1,31 @@
+﻿{% extends 'Template_pk.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}
+            <h1>VulnCard</h1>
+{% endblock %}
+
+
+{% block content %}
+        <div class="VulnCreationGrid">
+            <form action="{% url 'VulnCardCreate' %}" method="post">
+                {% csrf_token %}
+
+                {{ form.as_p }}
+                <input type="submit" value="OK">
+
+            </form>
+</div>
+        <div class="VulnsDisplayGrid">
+<h2>Mantis Vulns</h2>
+
+            <p>
+                <a href="/VulnBoard/create/{{ res.id}}">{{ res.id}}</a></br>
+                {{ results.name}}</br>
+                {{ results.vulnClass}}</br>
+                {{ results.severity}}</br>
+            </p>
+
+        </div>
+{% endblock %}

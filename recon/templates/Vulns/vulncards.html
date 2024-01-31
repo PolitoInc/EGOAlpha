@@ -1,0 +1,34 @@
+﻿{% extends 'Template_base.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}
+            <h1>VulnCard</h1>
+{% endblock %}
+
+
+{% block content %}
+
+
+        <div class="VulnCreationGrid">
+            <form action="" method="post">
+                {% csrf_token %}
+
+                {{ form.as_p }}
+                <input type="submit" value="OK">
+
+            </form>
+</div>
+        <div class="VulnsDisplayGrid">
+<h2>Mantis Vulns</h2>
+            {% for res in results %}
+            <p>
+                <a href="/VulnBoard/VulnCard/{{ res.id}}">{{ res.id}}</a></br>
+                {{ res.name}}</br>
+                {{ res.vulnClass}}</br>
+                {{ res.severity}}</br>
+            </p>
+            {% endfor %}
+        </div>
+
+{% endblock %}

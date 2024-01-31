@@ -1,0 +1,49 @@
+﻿{% extends 'Template_base.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}
+<h1>WordList</h1>
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="Customers_Create">
+
+
+
+<form action="{% url 'WordClassCreate' %}" method="post">
+{% csrf_token %}
+    {# This will display the radio button HTML for you #}
+    {{ form.as_p }}
+<input type="submit" value="OK">
+    {# You'll need a submit button or similar here to actually send the form #}
+</form>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="uploaded_file">
+    <button type="submit">Upload</button>
+    </form>
+
+    {% if filename %}
+    <p>File uploaded: <a href="{{ filename }}">{{ filename }}</a></p>
+    {% endif %}
+
+<form action="{% url 'createSuperList' %}" method="post">
+aaaaaaaaa
+{% csrf_token %}
+<input type="submit" value="OK">
+</form>
+</div>
+{% for w in WordList %}
+<p>{{w.id}}</br>
+{{w.groupName}}</br>
+{{w.description}}</br>
+{{w.count}}</br></p>
+{% endfor %}
+
+
+{% endblock %}

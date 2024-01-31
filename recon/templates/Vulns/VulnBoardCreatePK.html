@@ -1,0 +1,34 @@
+ extends 'Template_pk.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+
+{% block title %}
+            <h1>VulnBoard</h1>
+ {% endblock %}
+{% block customer_records %}
+
+        <div class="VulnDisplayGrid">
+            
+            <p>
+                <a href="/VulnBoard/create/{{ results.id}}">{{ results.id}}</a></br>
+                {{ results.vulnCard_id}}</br>
+                {{ results.Elevate_Vuln}}</br>
+                {{ results.name}}</br>
+                {{ results.tags}}</br>
+            </p>
+            
+        </div>
+        <div class="VulnCreationGrid">
+            <form action="{% url 'VulnBoardCreatePK' results.id  %}" method="post">
+                {% csrf_token %}
+                {# This will display the radio button HTML for you #}
+                {{ form.as_p }}
+                <input type="submit" value="OK">
+                {# You'll need a submit button or similar here to actually send the form #}
+            </form>
+        </div>
+
+
+    </div>
+ {% endblock %}
