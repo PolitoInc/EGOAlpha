@@ -22,6 +22,7 @@ import json
 import jc
 import dask
 import ast
+import traceback
 import dask.array as dd
 from nested_lookup import nested_delete
 import datetime
@@ -37,6 +38,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+print(os.name)
 
 r ='\033[1;31m'
 g ='\033[1;32m'
@@ -126,6 +128,7 @@ def DomainName_CREATOR(domain):
         if domain is None:
             set = {"Ipv": ["None"]}
         else:
+            print([str(ip) for ip in ipaddress.IPv4Network(domain)])
             set = {"Ipv": [str(ip) for ip in ipaddress.IPv4Network(domain)]}
             return set
     elif validIPAddress(domain) == True:
@@ -187,6 +190,7 @@ def checkurl(url):
         return 'http://' + o.netloc 
 
 def warn(string):
+	print('{0}[ ! ]{1} {2}'.format(r,e,string))
 
 def find(content,status):
     store_out = []
@@ -206,6 +210,7 @@ def Subdomain_attack(domain):
     if meow is False:
         pass
     else:
+        print('Subdomain_attack')
         url= checkurl(domain)
         headers= {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0'}
         try:
@@ -226,8 +231,10 @@ def Subdomain_attack(domain):
                 results= dict({"date": f"{split_time}", "name": f"{subdomain_find}", "method": "http", "severity": "high", "vulnerable": f"{domain}"})
                 return results
             else:
+                print(f'bool failure {bool(subdomain_find)} {subdomain_find}')
                 pass
         except Exception as err:
+            print(err)
             pass
 
 def replace_strings(string):
@@ -240,92 +247,125 @@ def list_to_dict(rlist):
         reresults = dict(map(lambda s : s.split(":"), rlist))
         return
     except Exception as E:
+        print(E)
         pass
      
 
 def brain_word_comprehension(data, record_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=None):
+    #print(f'brain_word_comprehension {data} type of data {type(data)}')
     # reads None value from memory
+    print('brain_word_comprehension')
     if data == 'None':
         pass
     else:
         STORED= set()
         DIC= {}
         datatype= type(data)
+        print('loads2')
         itype= type(data)
+        print(f'z newlinesplit', data, f'type {itype} bool value {bool(data)}')
         i = data
         if itype == None:
             pass
         elif "template" in i:
+            print('hereerererereererererereer')
             
             del i['timestamp']
+            print('hereerererereererererereer')
             if 'curl-command' in i:
                 curl_command = i.get('curl-command', '')
                 i = (nested_delete(i, 'curl-command'))
                 
+                print('i9iiiiiiiiiii', i)
                 md5_hash = hashlib.md5(json.dumps(i, sort_keys=True).encode('utf-8')).hexdigest()
                 curl_command = dict.fromkeys(['curl_command'], curl_command)
                 i.update(curl_command)
                 md5 = dict.fromkeys(['md5'], md5_hash)
+                print(f'failed here2     {DIC}      {md5}')
                 DIC.update(md5)
                 template_id = dict.fromkeys(['record_id'], record_id)
+                print(f'failed here3        {DIC}')
                 DIC.update(template_id)
+                print(f'failed here14       {DIC}')
                 DIC.update(i)
+                print(f'failed here15       {DIC}')
                 DIC_OUT = []
                 for k in list(DIC):
                     if '-' in k:
+                        #print(F' - {k}')
                         Removed_underscore = k.replace('-',"_")
                         DIC[Removed_underscore] = DIC.pop(k)
+                        #print(DIC)
                         
                         if k == 'classification':
                             port_i= i.get('classification',{})
                             for k in port_i:
                                 Removed_underscore = k.replace('-',"_")
                                 DIC[Removed_underscore] = DIC.pop(k)
+                                #print(DIC)
                                 DIC_OUT.append(DIC)
                         else:
                             DIC_OUT.append(DIC)
+                print(DIC)
                 DIC = DIC_OUT[0]
+                print(f' failed here {DIC}')
                 certificateurlPost= f"{HostAddress}:{Port}/api/Templates/create/"
                 recs= json.dumps(DIC)
+                print('recs  ', recs)
                 if auth_token_json:
                     headers.update(auth_token_json)
                 headers.update(auth_token_json)
                 postRecords = requests.post(certificateurlPost, data=(recs), headers=headers, verify=False)
+                print(json.loads(postRecords.content))
             else:
                 md5_hash = hashlib.md5(json.dumps(i, sort_keys=True).encode('utf-8')).hexdigest()
                 md5 = dict.fromkeys(['md5'], md5_hash)
+                print(f'failed here2     {DIC}      {md5}')
                 DIC.update(md5)
                 template_id = dict.fromkeys(['record_id'], record_id)
+                print(f'failed here3        {DIC}')
                 DIC.update(template_id)
+                print(f'failed here14       {DIC}')
                 DIC.update(i)
+                print(f'failed here15       {DIC}')
                 DIC_OUT = []
                 for k in list(DIC):
                     if '-' in k:
+                        #print(F' - {k}')
                         Removed_underscore = k.replace('-',"_")
                         DIC[Removed_underscore] = DIC.pop(k)
+                        #print(DIC)
                         
                         if k == 'classification':
                             port_i= i.get('classification',{})
                             for k in port_i:
                                 Removed_underscore = k.replace('-',"_")
                                 DIC[Removed_underscore] = DIC.pop(k)
+                                #print(DIC)
                                 DIC_OUT.append(DIC)
                         else:
                             DIC_OUT.append(DIC)
                             
                 DIC = DIC_OUT[0]
+                print(f' failed here {DIC}')
                 certificateurlPost= f"{HostAddress}:{Port}/api/Templates/create/"
                 recs= json.dumps(DIC)
+                print('recs  ',certificateurlPost,  recs)
                 if auth_token_json:
                     headers.update(auth_token_json)
                 headers.update(auth_token_json)
                 postRecords = requests.post(certificateurlPost, data=(recs), headers=headers, verify=False)
+                print(json.loads(postRecords.content))
         else:
             itype= type(i)
+            print('i not template', i, f'type {itype}')
             #words = replace_strings(i)
             wordsList = re.split(' ', i)
             itype= type(wordsList)
+            print('i not template wordsList', wordsList, f'type {itype}')
             if len(wordsList) == 6:
+                print('hereerererereererererereer')
+                print(f'length is 6')
                 DIC= {}
                 date_nuclei= f'{wordsList[0]} {wordsList[1]}'
                 date= dict.fromkeys(['date'], date_nuclei)
@@ -338,18 +378,26 @@ def brain_word_comprehension(data, record_id, HostAddress=EgoSettings.HostAddres
                 vulnerable_nuclei= wordsList[5]
                 vulnerable= dict.fromkeys(['vulnerable'], vulnerable_nuclei)
                 DIC.update(date)
+                print(f'DIC date  {DIC}')
                 DIC.update(name)
+                print(f'DIC name  {DIC}')
                 DIC.update(method)
+                print(f'DIC method  {DIC}')
                 DIC.update(severity)
+                print(f'DIC severity  {DIC}')
                 DIC.update(vulnerable)
+                print(f'dic {DIC}')
                 Nuclei_id = dict.fromkeys(['nuclei'], record_id)
                 Nuclei_id.update(DIC) 
                 certificateurlPost= f"{HostAddress}:{Port}/api/Nuclei/"
                 recs= json.dumps(Nuclei_id)
+                print('recs  ',certificateurlPost,  recs)
                 if auth_token_json:
                     headers.update(auth_token_json)
                 postRecords = requests.post(certificateurlPost, data=(recs), headers=headers, verify=False)
             elif len(wordsList) == 7:
+                print('hereerererereererererereer')
+                print(f'length is 7 == {len(wordsList)} {wordsList}')
                 DIC= {}
                 date_nuclei= f'{wordsList[0]} {wordsList[1]}'
                 date= dict.fromkeys(['date'], date_nuclei)
@@ -362,219 +410,119 @@ def brain_word_comprehension(data, record_id, HostAddress=EgoSettings.HostAddres
                 vulnerable_nuclei= wordsList[5]
                 vulnerable= dict.fromkeys(['vulnerable'], vulnerable_nuclei)
                 DIC.update(date)
+                print(f'DIC date  {DIC}')
                 DIC.update(name)
+                print(f'DIC name  {DIC}')
                 DIC.update(method)
+                print(f'DIC method  {DIC}')
                 DIC.update(severity)
+                print(f'DIC severity  {DIC}')
                 DIC.update(vulnerable)
+                print(f'dic {DIC}')
                 Nuclei_id = dict.fromkeys(['nuclei'], record_id)
                 Nuclei_id.update(DIC) 
                 certificateurlPost= f"{HostAddress}:{Port}/api/Nuclei/"
 
                 recs= json.dumps(Nuclei_id)
+                print('recs  ', certificateurlPost, recs)
                 if auth_token_json:
                     headers.update(auth_token_json)
                 postRecords = requests.post(certificateurlPost, data=(recs), headers=headers, verify=False)
             else:
+                print(f'compllete fialure not 7 or 6 vlaue {len(wordsList)}   {wordsList}   {i}')
                 pass
                 
 
         return STORED  
 
+def get_path(readyson):
+    if os.name == 'posix':
+        if not os.path.exists('./dump'):
+            os.makedirs('./dump')
+            return f"/home/ego/EGO_agent/dump/{readyson}.json"
+        else:
+            return f"/home/ego/EGO_agent/dump/{readyson}.json"
+    else:
+        if not os.path.exists('./dump'):
+            os.makedirs('dump')
+            return f"E:/tools/0_Secret_lab/EGO_old/ego8/EGO/dump/{readyson}.json"
+        else:
+            return f"E:/tools/0_Secret_lab/EGO_old/ego8/EGO/dump/{readyson}.json"
 
-def nuclei_func(domain , NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, Ipv_Scan, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=None):
-    tuple = (6, int(Global_Nuclei_RateLimit))
-    Global_Nuclei_RateLimit = round(random.uniform(tuple[0], tuple[1]))
+def get_url(domain_set, port):
+    if any(x == '443' for x in port):
+        fulldomain = domain_set['fulldomain']
+        url = f"https://{fulldomain}"
+    else:
+        fulldomain = domain_set['fulldomain']
+        url = f"http://{fulldomain}"
+    return url, fulldomain
+
+def get_nuclei_rate_limit(Global_Nuclei_CoolDown, Global_Nuclei_RateLimit):
+    if Global_Nuclei_CoolDown > 0: 
+        return ['-rlm', str(Global_Nuclei_CoolDown)]
+    else:
+        return ['-rate-limit', str(Global_Nuclei_RateLimit)]
+
+def run_nuclei(url, severity, path, Nuclei_rate_limit):
+    token = '3da50a43845a62269dc87bfa65dde5ae9e5d859068eb1ce19acc3725bb7cb2e4'
     try:
-        DIC= {}
+        nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl', '-silent', '-interactions-cooldown-period', '30', '-interactions-poll-duration', '10', '-interactions-eviction', '30'] + Nuclei_rate_limit + ['-u', url, '-iserver', 'rabidio.com', '-itoken', token, '-severity', severity, '-output', path], text=True)
+        return nuclei.split('\n')
+    except Exception as E:
+        print(E)
+        return None
+
+def process_nuclei_results(nuclei_results, record_id, HostAddress, Port, auth_token_json):
+    for i in nuclei_results:
+        if i:  # Check that i is not an empty string
+            nuclei_result = json.loads(i)
+            nuclei_brain = brain_word_comprehension(nuclei_result, record_id, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+    return True
+
+def nuclei_func(domain, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=False, auth_token_json=None):
+    try:
         record_id = domain['id']
-        alive= domain["alive"]
-        p= domain['subDomain']
-        port= domain['OpenPorts']
-        s= domain['DNSQuery_record']
-        a= domain['DNSAuthority_record']
-        z= a + s
-        domain_set= DomainName_CREATOR(p)
-        
-        try:
-            if any(x == '443' for x in port):
-                domainname= domain_set['domainname']
-                fulldomain= domain_set['fulldomain']
-                url= f"https://{fulldomain}"
-
-            else:
-                domainname= domain_set['domainname']
-                fulldomain= domain_set['fulldomain']
-                url= f"http://{fulldomain}"
-        except:
-            #print not finished
-            fulldomain= domain_set['Ipv']
+        alive = domain["alive"]
+        p = domain['subDomain']
+        port = domain['OpenPorts']
+        domain_set = DomainName_CREATOR(p)
+        url, fulldomain = get_url(domain_set, port)
         Record_NucleiScan = domain['nucleiBool']
-
         if Record_NucleiScan == NucleiScan:
             if Ipv_Scan == True:
-                severity_scored= 'info,low,medium,high,critical,unknown'
-                #severity_scored_list= severity_scored.split(",")
-                severity_scored_list= re.split(';|,|\*|\n', severity_scored)
-                severity_list= severity.split(",")
-        
+                severity_scored = 'info,low,medium,high,critical,unknown'
+                severity_scored_list = re.split(';|,|\*|\n', severity_scored)
+                severity_list = severity.split(",")
                 if any(list == severity_list for list in severity_scored_list):
                     return False
                 else:
                     readyson = fulldomain.replace('.', '_')
-                    token= 'ReplaceME'
-                    failed_search= 'Nothing to report, sorry.' 
-                    #'-concurrency', '3'
-                    #  nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl', '-u', f'{domain}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', f'./dump/{readyson}.json'], text=True)
-                    if os.name == 'posix':
-                        path = f"./dump/{readyson}.json"
+                    path = get_path(readyson)
+                    Nuclei_rate_limit = get_nuclei_rate_limit(Global_Nuclei_CoolDown, Global_Nuclei_RateLimit)
+                    nuclei_results = run_nuclei(url, severity, path, Nuclei_rate_limit)
+                    if nuclei_results:
+                        return process_nuclei_results(nuclei_results, record_id, HostAddress, Port, auth_token_json)
                     else:
-                        #path = f"E:/tools/0_Secret_lab/EGO_old/ego8\EGO/dump/{readyson}.json"
-                        path = f"E:/tools/0_Secret_lab/EGO_old/ego8/EGO/dump/{readyson}.json"
-                    try:
-                        
-                        nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-silent', '-jsonl', '-interactions-cooldown-period', '30', '-interactions-poll-duration', '10', '-interactions-eviction', '30', '-rate-limit', f'{Global_Nuclei_RateLimit}', '-rate-limit-minute', f'{Global_Nuclei_CoolDown}', '-u', f'{url}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', f"{path}"], text=True)
-                    
-
-                        if nuclei is not True: 
-                            pass
-                        else:
-                            nuclei_results= nuclei.split('\n')
-                            for i in nuclei_results:
-                                nuclei_results = json.loads(i)
-                                nuclei_brain= brain_word_comprehension(nuclei_results, record_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=auth_token_json)
-                                return True
-                    except Exception as E:
                         return False
-            else:
-                if bool(alive) == False:
-                    pass
-                else:
-                    Subdomain_set= Subdomain_attack(fulldomain)
-                    severity_scored= 'info,low,medium,high,critical,unknown'
-                #severity_scored_list= severity_scored.split(",")
-                    severity_scored_list= re.split(';|,|\*|\n', severity_scored)
-                    severity_list= severity.split(",")
-                    readyson = fulldomain.replace('.', '_')
-                    if any(list == severity_list for list in severity_scored_list):
-                        return False
-                    else:
-                        token= '3da50a43845a62269dc87bfa65dde5ae9e5d859068eb1ce19acc3725bb7cb2e4'
-                        failed_search= 'Nothing to report, sorry.' 
-                        #'-concurrency', '3'
-                        #  nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl', '-u', f'{domain}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', f'./dump/{readyson}.json'], text=True)
-                        if os.name == 'posix':
-                            path = f"./dump/{readyson}.json"
-                        else:
-                            #path = f"E:/tools/0_Secret_lab/EGO_old/ego8\EGO/dump/{readyson}.json"
-                            path = f"E:/tools/0_Secret_lab/EGO_old/ego8/EGO/dump/{readyson}.json"
-                        try:
-
-                            if Global_Nuclei_CoolDown > 0: 
-                                Nuclei_rate_limit = "'-rlm', f'Global_Nuclei_CoolDown' ,"
-                            else:
-                                Nuclei_rate_limit = "'-rate-limit', f'{Global_Nuclei_RateLimit}'"
-                            nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl','-silent', '-interactions-cooldown-period', '30', '-interactions-poll-duration', '10', '-interactions-eviction', '30', Nuclei_rate_limit, '-u', f'{url}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', path ], text=True)
-                            nuclei_results= nuclei.split('\n')
-                            if nuclei:
-                                for i in nuclei_results:
-                                    nuclei_results = json.loads(i)
-                                    nuclei_brain= brain_word_comprehension(nuclei_results, record_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=auth_token_json )
-                                    return True
-                        except Exception as E:
-                            return False
-        elif bool(alive) == False:
-            pass
         else:
-            if Ipv_Scan == True:
-                severity_scored= 'info,low,medium,high,critical,unknown'
-                #severity_scored_list= severity_scored.split(",")
-                severity_scored_list= re.split(';|,|\*|\n', severity_scored)
-                severity_list= severity.split(",")
-            
-                if any(list == severity_list for list in severity_scored_list):
-                    return False
-                elif 'all' in severity_list:
-                    sevrity = 'info,low,medium,high,critical,unknown'
-                    readyson = fulldomain.replace('.', '_')
-                    token= '3da50a43845a62269dc87bfa65dde5ae9e5d859068eb1ce19acc3725bb7cb2e4'
-                    failed_search= 'Nothing to report, sorry.' 
-                    #'-concurrency', '3'
-                    #  nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl', '-u', f'{domain}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', f'./dump/{readyson}.json'], text=True)
-                    if os.name == 'posix':
-                        path = f"./dump/{readyson}.json"
-                    else:
-                        #path = f"E:/tools/0_Secret_lab/EGO_old/ego8\EGO/dump/{readyson}.json"
-                        path = f"E:/tools/0_Secret_lab/EGO_old/ego8/EGO/dump/{readyson}.json"
-                    try:
-                        if Global_Nuclei_CoolDown > 0: 
-                            Nuclei_rate_limit = "'-rlm', f'Global_Nuclei_CoolDown' ,"
-                        else:
-                            Nuclei_rate_limit = "'-rate-limit', f'{Global_Nuclei_RateLimit}'"
-                        nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl','-silent', '-interactions-cooldown-period', '30', '-interactions-poll-duration', '10', '-interactions-eviction', '30', Nuclei_rate_limit, '-u', f'{url}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', path ], text=True)
-                        nuclei_results= nuclei.split('\n')
-                        if nuclei:
-                            for i in nuclei_results:
-                                nuclei_results = json.loads(i)
-                                nuclei_brain= brain_word_comprehension(nuclei_results, record_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=auth_token_json )
-                                return True
-                    except Exception as E:
-                        return False
-                else:
-                    readyson = fulldomain.replace('.', '_')
-                    token= '3da50a43845a62269dc87bfa65dde5ae9e5d859068eb1ce19acc3725bb7cb2e4'
-                    failed_search= 'Nothing to report, sorry.' 
-                    #'-concurrency', '3'
-                    #  nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl', '-u', f'{domain}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', f'./dump/{readyson}.json'], text=True)
-                    if os.name == 'posix':
-                        path = f"./dump/{readyson}.json"
-                    else:
-                        path = f"E:/tools/0_Secret_lab/EGO_old/ego8/EGO/dump/"
-                    try:
-                        if nuclei:
-                            if Global_Nuclei_CoolDown > 0: 
-                                Nuclei_rate_limit = "'-rlm', f'Global_Nuclei_CoolDown' ,"
-                            else:
-                                Nuclei_rate_limit = "'-rate-limit', f'{Global_Nuclei_RateLimit}'"
-                            nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl','-silent', '-interactions-cooldown-period', '30', '-interactions-poll-duration', '10', '-interactions-eviction', '30', Nuclei_rate_limit, '-u', f'{url}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', path ], text=True)
-                            nuclei_results= nuclei.split('\n')
-                            for i in nuclei_results:
-                                nuclei_results = json.loads(i)
-                                nuclei_brain= brain_word_comprehension(nuclei_results, record_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=auth_token_json )
-                                return True
-                    except Exception as E:
-                        return False
+            severity_scored = 'info,low,medium,high,critical,unknown'
+            severity_scored_list = re.split(';|,|\*|\n', severity_scored)
+            severity_list = severity.split(",")
+            if any(list == severity_list for list in severity_scored_list):
+                return False
             else:
-                Subdomain_set= Subdomain_attack(fulldomain)
-                severity_scored= 'info,low,medium,high,critical,unknown'
-                #severity_scored_list= severity_scored.split(",")
-                severity_scored_list= re.split(';|,|\*|\n', severity_scored)
-                severity_list= severity.split(",")
                 readyson = fulldomain.replace('.', '_')
-                if any(list == severity_list for list in severity_scored_list):
-                    return False
+                path = get_path(readyson)
+                Nuclei_rate_limit = get_nuclei_rate_limit(Global_Nuclei_CoolDown, Global_Nuclei_RateLimit)
+                nuclei_results = run_nuclei(url, severity, path, Nuclei_rate_limit)
+                if nuclei_results:
+                    return process_nuclei_results(nuclei_results, record_id, HostAddress, Port, auth_token_json)
                 else:
-                    token= '3da50a43845a62269dc87bfa65dde5ae9e5d859068eb1ce19acc3725bb7cb2e4'
-                    failed_search= 'Nothing to report, sorry.' 
-                    if os.name == 'posix':
-                        path = f"./dump/{readyson}.json"
-                    else:
-                        #path = f"E:/tools/0_Secret_lab/EGO_old/ego8\EGO/dump/{readyson}.json"
-                        path = f"E:/tools/0_Secret_lab/EGO_old/ego8/EGO/dump/"
-                    try:
-                        if Global_Nuclei_CoolDown > 0: 
-                            Nuclei_rate_limit = "'-rlm', f'Global_Nuclei_CoolDown' ,"
-                        else:
-                            Nuclei_rate_limit = "'-rate-limit', f'{Global_Nuclei_RateLimit}'"
-                        nuclei = subprocess.check_output(['nuclei', '-no-color','-vv', '-jsonl','-silent', '-interactions-cooldown-period', '30', '-interactions-poll-duration', '10', '-interactions-eviction', '30', Nuclei_rate_limit, '-u', f'{url}', '-iserver', 'rabidio.com', '-itoken', f'{token}', '-severity', f'{severity}', '-output', path ], text=True)
-                        if nuclei:
-                            nuclei_results= nuclei.split('\n')
-                            for i in nuclei_results:
-                                nuclei_results = json.loads(i)
-                                nuclei_brain= brain_word_comprehension( nuclei_results, record_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=auth_token_json )
-                                return True
-                    except Exception as E:
-                        return False
+                    return False
     except Exception as E:
+        print(E)
+
 
 def DATEREADER(created_date, LastScanned):
     current_date = datetime.datetime.now()
@@ -594,146 +542,200 @@ def DATEREADER(created_date, LastScanned):
         result = False
     return result
 
-def gnaw():
-    cpuCount = round(os.cpu_count())
-    username = f"{EgoSettings.EgoAgentUser}"
-    password = f"{EgoSettings.EgoAgentPassWord}"
+def Chunky(lst, num_chunks):
+    avg = len(lst) // num_chunks
+    remainder = len(lst) % num_chunks
+    return [lst[i * avg + min(i, remainder):(i + 1) * avg + min(i + 1, remainder)] for i in range(num_chunks)]
+
+
+def get_auth_token():
     urlLogin = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/login"
     headers = {"Content-type": "application/json", "Accept": "application/json"}
     creds = {"username": EgoSettings.EgoAgentUser, "password": EgoSettings.EgoAgentPassWord}
-    req = requests.post(urlLogin,data=json.dumps(creds),headers=headers, verify=False)
+    req = requests.post(urlLogin, data=json.dumps(creds), headers=headers, verify=False)
     rjson_auth = req.json()
     if rjson_auth:
-        auth_token_json = {"Authorization": f"Token {rjson_auth['token']}"}
+        return {"Authorization": f"Token {rjson_auth['token']}"}
+    return None
+
+def get_request(url, auth_token_json=None):
+    if auth_token_json:
+        return requests.get(url, headers=auth_token_json, verify=False)
+    return requests.get(url, verify=False)
+
+def create_EGOAgent(data, auth_token_json):
+    url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/EGOAgent/"
+    headers = {"Content-type": "application/json", "Accept": "application/json"}
+    dt = datetime.datetime.now()
+    data.update({"lastConnect": dt.strftime('%Y-%m-%d')})
+    if auth_token_json:
+        headers.update(auth_token_json)
+    response = requests.post(url, data=json.dumps(data), headers=headers, verify=False)
+    return response.json()
+
+def update_GnawControl(ego_id, agent_id, auth_token_json):
+    url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
+    data = {"egoAgent": agent_id}
+    headers = {"Content-type": "application/json", "Accept": "application/json"}
+    if auth_token_json:
+        headers.update(auth_token_json)
+    response = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
+    return response.json()
+
+def worker_func(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=False, auth_token_json=None): 
+    print('here2', record['subDomain'])
+    return nuclei_func(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=HostAddress, Port=Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json) 
+
+def gnaw():
+    cpuCount = round(os.cpu_count())
+    print(f'cpu {cpuCount}')
+    auth_token_json = get_auth_token()
 
     Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/"
-    if auth_token_json:
-        request = requests.get(Url_EgoControls, headers=auth_token_json, verify=False)
-    else:
-        request = requests.get(Url_EgoControls, verify=False)
+    request = get_request(Url_EgoControls, auth_token_json)
     responses = request.json()
-    BoneGnaw= []
+    
+    agent_data = {}  # Fill this with the necessary data
+    agent_response = create_EGOAgent(agent_data, auth_token_json)
+    print(agent_response)
+    agent_id = agent_response['id']    
+    for response in responses:
+        egoAgent = response['id']
+        if bool(response['egoAgent']) != True:
+            agent_data = {"egoAgent": egoAgent}  # Fill this with the necessary data
+            agent_response = create_EGOAgent(agent_data, auth_token_json)
+            agent_id = agent_response['id']
+        else:
+            agent_id = egoAgent        
+        update_GnawControl(response['id'], agent_id, auth_token_json) 
+    
+    print(responses)
+    NukeOut = []
     for response in responses:
         ego_id = response['id']
         try:
             COMPLETED = response['Gnaw_Completed']
             FAILED = response['failed']
-            if COMPLETED == True:
-                pass
-            elif FAILED == True:
-                pass
+            print(COMPLETED)
+            if COMPLETED == True or FAILED == True:
+                continue
+            ScanGroupingProject= response["ScanGroupingProject"]
+            customerId= response['ScanProjectByID']
+            severity= response['severity']
+            NucleiScan= response['NucleiScan']
+            egoAgent = response['id']
+            print('severity', severity)
+            Ipv_Scan= response['Ipv_Scan']
+            LoopCustomersBool= response['LoopCustomersBool']
+            Customer_chunk_size= response['Customer_chunk_size']
+            Record_chunk_size= response['Record_chunk_size']
+            chunk_timeout= 0.2
+            Global_Nuclei_CoolDown= response['Global_Nuclei_CoolDown']
+            Global_Nuclei_RateLimit= response['Global_Nuclei_RateLimit']
+            Port = response['Port']
+            HostAddress= response['HostAddress']
+            CUSTOMERS= f"{HostAddress}:{Port}/api/customers/{customerId}"
+            BoneGnaw= []
+            if LoopCustomersBool == True:
+                print('loops')
+                LoopCustomers= f"{HostAddress}:{Port}/api/customers/"
+                getRecords= get_request(LoopCustomers, auth_token_json)
+                rjsons= getRecords.json()
+                id_list= [i['id'] for i in rjsons]
+                RecordsCheck_chunks = split(id_list, Record_chunk_size)
+                print('count', len(id_list))
+                print('RecordsCheck_chunks', len(RecordsCheck_chunks))
+                chunkout=[]
+                for customerIdLoops in RecordsCheck_chunks:
+                    print(customerIdLoops)
+                    for customerIdLoop in customerIdLoops:
+                        CUSTOMERS= f"{HostAddress}:{Port}/api/customers/{customerIdLoop}"
+                        getRecords= get_request(CUSTOMERS, auth_token_json)
+                        rjson= getRecords.json()
+                        gnawTarget = (ScanGroupingProject.strip())
+                        gnawTargets = (rjson['groupingProject'])
+                        skipscan = rjson['skipScan']
+                        print('gnawTarget', gnawTarget)
+                        print('gnawTargets', gnawTargets)
+                        if skipscan == True:
+                            continue
+                        elif str(gnawTarget) == str(gnawTargets):
+                            RecordsStore= rjson["customerrecords"]
+                            FullDomainNameSeensIt= set()
+                            result = {}
+                            print('count', len(RecordsStore))
+                            headers = {"Content-type": "application/json", "Accept": "application/json"}
+                            Bool_Start_chunk_timeout= False
+                            if Bool_Start_chunk_timeout:
+                                print('Bool_Start_chunk_timeout')
+                                time.sleep(chunk_timeout)
+                                continue
+                            else:
+                                RecordsCheck_chunks2 = Chunky(RecordsStore, Record_chunk_size)
+                                BoneGnaw= []
+                                for RecordsChecks in RecordsCheck_chunks2:
+                                    for RecordsCheck in RecordsChecks:
+                                        id = RecordsCheck.get('id')
+                                        created_date = RecordsCheck.get('created_date')
+                                        LastScanned = RecordsCheck.get('LastScanned')
+                                        SkipScan = RecordsCheck.get('skipScan')
+                                        BoolSkipScan = DATEREADER(created_date, LastScanned)
+                                        BoolSkipScan = True
+                                        if SkipScan == True:
+                                            print('SkipScan', SkipScan)
+                                            continue
+                                        elif BoolSkipScan == False:
+                                            continue
+                                        else:
+                                            Bool_Start_chunk_timeout =+ True
+                                            # Create a list of delayed computations
+                                            computations = dask.delayed(worker_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json)
+
+                                            # Compute the computations in parallel
+                                            Nuke_responses = dask.compute(*computations, scheduler='threads', num_workers=len(RecordsCheck_chunks))                                            
+                                            BoneGnaw.append(Nuke_responses)
+                                            url= f"{HostAddress}:{Port}/api/records/{id}"
+                                            data = {"lastScan": datetime.datetime.now()}
+                                            #resp = requests.patch(url=url, data=data, headers=headers )
+                        else:
+                            print(gnawTarget == gnawTargets)
+                Nuke_responses = dask.compute(*BoneGnaw, scheduler='threads', num_workers=cpuCount)
+                NukeOut.append(Nuke_responses)
             else:
-                ScanGroupingProject= response["ScanGroupingProject"]
-                customerId= response['ScanProjectByID']
-                #customerId= "33dbd41c-ddea-4bc6-a1e7-41d3acae519d"
-            # info, low, medium, high, critical, unknown
-                severity= response['severity']
-            #true == false false == true
-                NucleiScan= response['NucleiScan']
-                Ipv_Scan= response['Ipv_Scan']
-                LoopCustomersBool= response['LoopCustomersBool']
-                Customer_chunk_size= response['Customer_chunk_size']
-                Record_chunk_size= response['Record_chunk_size']
-                chunk_timeout= 0.2
-                Global_Nuclei_CoolDown= response['Global_Nuclei_CoolDown']
-                Global_Nuclei_RateLimit= response['Global_Nuclei_RateLimit']
-                Port = response['Port']
-                HostAddress= response['HostAddress']
-                CUSTOMERS= f"{HostAddress}:{Port}/api/customers/{customerId}"
-                if LoopCustomersBool == True:
-                    LoopCustomers= f"{HostAddress}:{Port}/api/customers/"
-                    if auth_token_json:
-                        getRecords= requests.get(LoopCustomers, headers=auth_token_json, verify=False)
+                print('update_GnawControl', update_GnawControl)
+                getRecords= get_request(CUSTOMERS, auth_token_json)
+                rjson= json.loads(getRecords.text)
+                OutOfScopeString = rjson['OutOfScopeString']
+                RecordsCheck= rjson["customerrecords"]
+                FullDomainNameSeensIt= set()
+                result = {}
+                RecordsCheck_chunks = list(Chunky(RecordsCheck, Record_chunk_size))
+                headers = {"Content-type": "application/json", "Accept": "application/json"}
+                workers = len(RecordsCheck_chunks)
+                print('RecordsCheck_chunks', len(RecordsCheck_chunks))
+                print('count', len(RecordsCheck))
+                print('Record_chunk_size', Record_chunk_size)                
+                Store= []
+                for RecordsChecks in RecordsCheck_chunks:
+                    if OutOfScopeString is None:
+                        computations = [dask.delayed(worker_func)(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json) for record in RecordsChecks]
+                        Store.extend(computations)
+                    elif OutOfScopeString not in RecordsCheck['subDomain']:
+                        print(RecordsCheck['subDomain'])
+                        continue
                     else:
-                        getRecords= requests.get(LoopCustomers, verify=False)
-                    rjsons= getRecords.json()
-                    id_list= [i['id'] for i in rjsons]
-                    RecordsCheck_chunks = split(id_list, Record_chunk_size)
-                    chunkout=[]
-                    for customerIdLoops in RecordsCheck_chunks:
-                            
-                        for customerIdLoop in customerIdLoops:
-                            CUSTOMERS= f"{HostAddress}:{Port}/api/customers/{customerIdLoop}"
-                            if auth_token_json:
-                                getRecords= requests.get(CUSTOMERS, headers=auth_token_json, verify=False)
-                            else:
-                                getRecords= requests.get(CUSTOMERS, verify=False)
-                            rjson= getRecords.json()
-                            gnawTarget = (ScanGroupingProject.strip())
-                            gnawTargets = (rjson['groupingProject'])
-                            skipscan = rjson['skipScan']
-                            if skipscan == True:
-                                pass
-                            elif str(gnawTarget) == str(gnawTargets):
-                                RecordsStore= rjson["customerrecords"]
-                                FullDomainNameSeensIt= set()
-                                result = {}
-                                headers = {"Content-type": "application/json", "Accept": "application/json"}
-                                #BoneGnaw= []
-                                Bool_Start_chunk_timeout= False
-                                if Bool_Start_chunk_timeout:
-                                    time.sleep(chunk_timeout)
-                                    continue
-                                else:
-                                    RecordsCheck_chunks2 = split(RecordsStore, Record_chunk_size)
-                                    BoneGnaw= []
-                                    for RecordsChecks in RecordsCheck_chunks2:
-                                        for RecordsCheck in RecordsChecks:
-                                            id = RecordsCheck.get('id')
-                                            created_date = RecordsCheck.get('created_date')
-                                            LastScanned = RecordsCheck.get('LastScanned')
-                                            SkipScan = RecordsCheck.get('skipScan')
-                                            BoolSkipScan = DATEREADER(created_date, LastScanned)
-                                            BoolSkipScan = True
-                                            if SkipScan == True:
-                                                pass
-                                            elif BoolSkipScan == False:
-                                                pass
-                                            else:
-                                                Bool_Start_chunk_timeout =+ True
-                                                Nuke_response= dask.delayed(nuclei_func)(RecordsCheck , NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, Ipv_Scan, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=auth_token_json)
-                                                BoneGnaw.append(Nuke_response)
-                                                url= f"{HostAddress}:{Port}/api/records/{id}"
-                                                data = {"lastScan": datetime.datetime.now()}
-                                                #resp = requests.patch(url=url, data=data, headers=headers )
-                            else:
-                else:
-                    getRecords= requests.get(CUSTOMERS, headers=auth_token_json, verify=False)
-                    rjson= json.loads(getRecords.text)
-                    OutOfScopeString = rjson['OutOfScopeString']
-                    RecordsCheck= rjson["customerrecords"]
-                    FullDomainNameSeensIt= set()
-                    result = {}
-                    RecordsCheck_chunks = list(split(RecordsCheck, Record_chunk_size))
-                    headers = {"Content-type": "application/json", "Accept": "application/json"}
-                    for RecordsChecks in RecordsCheck_chunks:
-                        for RecordsCheck in RecordsChecks:
-                            id = RecordsCheck.get('id')
-                            created_date = RecordsCheck.get('created_date')
-                            LastScanned = RecordsCheck.get('LastScanned')
-                            SkipScan = RecordsCheck.get('skipScan')
-                            BoolSkipScan = DATEREADER(created_date, LastScanned)
-                            #if SkipScan == True:
-                            BoolSkipScan = False
-                            if BoolSkipScan == True:
-                                pass
-                            else:
-                                if OutOfScopeString is None:
-                                    Nuke_response= dask.delayed(nuclei_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, Ipv_Scan, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=auth_token_json)
-                                    BoneGnaw.append(Nuke_response)
-                                    url= f"{HostAddress}:{Port}/api/records/{id}"
-                                    data = {"lastScan": datetime.datetime.now()}
-                                    #resp = requests.patch(url=url, data=data, headers=headers )
-                                elif OutOfScopeString not in RecordsCheck['subDomain']:
-                                    pass
-                                else:
-                                    Nuke_response= dask.delayed(nuclei_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, Ipv_Scan, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=auth_token_json)
-                                    BoneGnaw.append(Nuke_response)
-                                    url= f"{HostAddress}:{Port}/api/records/{id}"
-                                    data = {"lastScan": datetime.datetime.now()}
-                                    #resp = requests.patch(url=url, data=data, headers=headers )
+                        computations = [dask.delayed(worker_func)(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json) for record in RecordsChecks]
+                        Store.extend(computations)
+                    BoneGnaw.append(Store)
+                # Compute all the delayed computations in parallel
+                Nuke_responses = dask.compute(*Store, scheduler='threads', num_workers=workers)
+                NukeOut.append(Nuke_responses)
         except Exception as E:
+            print('Exception')
+            print(E)  
+            traceback.print_exc()
             gnaw_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
+            print(f"going to update gnawcontrols the task has been complete")
             dataPUt = {"failed": True}
             recs = json.dumps(dataPUt)
             headers = {"Content-type": "application/json", "Accept": "application/json"}
@@ -741,34 +743,36 @@ def gnaw():
                 headers.update(auth_token_json)
             request = requests.patch(gnaw_url, data=recs, headers=headers, verify=False)
             response = request.json()
-
-    Nuke_responses= dask.compute(*BoneGnaw)
+            print('done record ')
+            Nuke_responses  = None
+    Nuke_responses=NukeOut
+    print(f'GNAW IS COMPLETE {Nuke_responses}')         
     gnaw_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{response['id']}"
+    print(f"going to update gnawcontrols the task has been complete")
     dataPUt = {"Gnaw_Completed": True}
     recs = json.dumps(dataPUt)
+    
     headers = {"Content-type": "application/json", "Accept": "application/json"}
     if auth_token_json:
         headers.update(auth_token_json)
     request = requests.patch(gnaw_url, data=recs, headers=headers, verify=False)
     response = request.json()
-    gnaw_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/"
-                
-    dataPUt = {"Gnaw_Completed": True}
-    recs = json.dumps(dataPUt)
-    if auth_token_json:
-        headers.update(auth_token_json)
-        request = requests.patch(gnaw_url, data=recs, headers=headers, verify=False)
-        response = request.json()
-
+    print('done record ')
+    return agent_response
 
 
 if __name__ == "__main__":
     while True:
-        gnaw()
-        time.sleep(10)
+        r4sults=gnaw()
+        print(f"sleeping {r4sults['callBackTime']} zzzzzzz")
+        time.sleep(r4sults['callBackTime'])
+        
 
     
 
 
 
     #    Nuke_responses= dask.compute(*BoneGnaw, scheduler='distributed')
+    #print('BoneGnaw', BoneGnaw)
+    #print('BoneGnaw Nuke_responses', Nuke_responses)
+    #print('failed here 0')

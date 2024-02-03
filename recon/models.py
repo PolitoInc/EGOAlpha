@@ -51,16 +51,6 @@ choices_request_methods= [
     ('trace', 'TRACE')
     ]
 
-class EGOAgent(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    hostLocation = models.CharField(max_length=256, blank=True)
-    lastConnect = models.DateField()
-    callBackTime = models.IntegerField(default='30')
-    alive = models.BooleanField(default='False')
-    scanning = models.BooleanField(default='False')
-    bearer_token = models.CharField(max_length=500, blank=True)
-    
-
 def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
     return 'ATTACK/{0}'.format(filename)
@@ -225,11 +215,21 @@ class Nmap(BaseModel):
 ##############################
 ######## Control
 ##############################
+class EGOAgent(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=256, null=True, blank=True)
+    hostLocation = models.CharField(max_length=256, blank=True)
+    lastConnect = models.DateField()
+    callBackTime = models.IntegerField(default='30')
+    alive = models.BooleanField(default='False')
+    scanning = models.BooleanField(default='False')
+    bearer_token = models.CharField(max_length=500, blank=True)
+
 class GnawControl(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     NucleiScan = models.BooleanField(default='True')
     Ipv_Scan = models.BooleanField(default='False')
+    egoAgent = models.ForeignKey(EGOAgent, on_delete=models.CASCADE, related_name='egoAgent', null=True, blank=True)
     LoopCustomersBool = models.BooleanField(default='False')
 ## fix in next updatee to support list of strings to ignore
     OutOfScope = models.CharField(max_length = 75, blank=True, null=True)
@@ -246,6 +246,7 @@ class GnawControl(BaseModel):
     Gnaw_Completed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">Used to scan all customers.</fieldset>')
     failed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">An exception occured.</fieldset>')
     scan_objects = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
+    SubdomainsSeen = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
 
 class EgoControl(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

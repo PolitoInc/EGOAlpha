@@ -45,9 +45,7 @@ urlpatterns = [
     path('WordList/fileUpload', fileUpload, name='fileUpload'),
     path('WordList/create', WordClassCreate, name='WordClassCreate'),
     path('VulnBoard/submited/<pk>', VulnSubmitted, name='VulnSubmitted'),
-
     path('api/login', LoginApiView.as_view()),
-
     path('api/csv_version/', csv_versionListViewSet.as_view()),
     path('api/csv_version/<pk>/', csv_versionViewSet.as_view()),
     path('api/csv_version/create/', csv_versionCreateViewSet.as_view()),
@@ -118,6 +116,8 @@ urlpatterns = [
     path('api/whois/create', whoisCreateViewSet.as_view()),
     path('api/whois/', whoisListViewSet.as_view()),
     path('api/whois/<pk>', whoisRetrieveViewSet.as_view()),
+    path('api/EGOAgent/', EGOAgentListCreateView.as_view(), name='EGOAgent'),
+    path('api/EGOAgent/<pk>/', EGOAgentRetrieveUpdateDestroyView.as_view(), name='EGOAgent'),
     ]
 
 

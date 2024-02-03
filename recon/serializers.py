@@ -6,6 +6,20 @@ from recon.models import *
 from recon.forms import *
 from collections import Counter, OrderedDict
 
+
+class EGOAgentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EGOAgent
+        fields = [
+            'id', 
+            'hostLocation', 
+            'lastConnect', 
+            'callBackTime', 
+            'alive', 
+            'scanning', 
+            'bearer_token'
+            ]
+
 #########################
 ####    Customer serializers
 #######################   
@@ -304,6 +318,7 @@ class WordListGroupSerializer(serializers.ModelSerializer):
 #######################
 
 class GnawControlSerializer(serializers.ModelSerializer):
+    egoAgent = EGOAgentSerializer()
     class Meta:
         model = GnawControl
         fields = '__all__'

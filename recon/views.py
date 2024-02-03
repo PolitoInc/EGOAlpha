@@ -62,7 +62,7 @@ class SignUpView(generic.CreateView):
     template_name = './auth/signup.html'
     
     def form_valid(self, form):
-        signup_key = form.cleaned_data.get('tX1i09vWyTnvV169ZLBEdyfmU')
+        signup_key = form.cleaned_data.get('REPLACEME')
         if signup_key == 'string':  # replace 'string' with your actual key
             response = super().form_valid(form)
             # Authenticate the user
@@ -1397,3 +1397,11 @@ class whoisListViewSet(BaseView, generics.ListAPIView):
 class whoisRetrieveViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = Whois_serializers
     queryset = whois.objects.all()
+
+class EGOAgentListCreateView(generics.ListCreateAPIView):
+    queryset = EGOAgent.objects.all()
+    serializer_class = EGOAgentSerializer
+
+class EGOAgentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = EGOAgent.objects.all()
+    serializer_class = EGOAgentSerializer
