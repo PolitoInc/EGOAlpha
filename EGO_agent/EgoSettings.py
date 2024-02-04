@@ -10,3 +10,5 @@ CensysSecretKey = ""
 HostAddress = "http://127.0.0.1"
 Port = "5000"
 api_accessKey = ""
+
+egoAgent = ""

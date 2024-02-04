@@ -595,19 +595,27 @@ def gnaw():
     request = get_request(Url_EgoControls, auth_token_json)
     responses = request.json()
     
-    agent_data = {}  # Fill this with the necessary data
-    agent_response = create_EGOAgent(agent_data, auth_token_json)
-    print(agent_response)
-    agent_id = agent_response['id']    
+
+    Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/"
+    request = get_request(Url_EgoControls, auth_token_json)
+    responses = request.json()
+
     for response in responses:
-        egoAgent = response['id']
-        if bool(response['egoAgent']) != True:
-            agent_data = {"egoAgent": egoAgent}  # Fill this with the necessary data
+        if not EgoSettings.egoAgent:  # If egoAgent is an empty string
+            agent_data = {"egoAgent": response['id']}  # Fill this with the necessary data
             agent_response = create_EGOAgent(agent_data, auth_token_json)
+
+            try:
+                uuid_obj = uuid.UUID(agent_response['id'], version=4)
+            except ValueError:
+                raise Exception("Invalid UUID")
+
             agent_id = agent_response['id']
+            EgoSettings.egoAgent = agent_id
         else:
-            agent_id = egoAgent        
-        update_GnawControl(response['id'], agent_id, auth_token_json) 
+            agent_id = EgoSettings.egoAgent  # Use the egoAgent from EgoSettings
+        update_GnawControl(response['id'], agent_id, auth_token_json)
+
     
     print(responses)
     NukeOut = []
