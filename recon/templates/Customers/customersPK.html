@@ -96,17 +96,20 @@
     <tbody class="vuln">
         <tr class="vulnTrTop">
             <td colspan="2" class="toptd"><span class="namespan">Name: {{info.info.name}}</span></td> <!-- Accessing nested dictionary -->
+            <td colspan="4" class="toptd"><span class="topspan">Date: {{info.date}}</span></td> <!-- Accessing nested dictionary -->
+        </tr>
+        <tr class="vulnTrMidMid">
+            <td colspan="1" class="midtd"><span class="topspan">Location: {{info.matched_at}}</span></td> <!-- Accessing nested dictionary -->    
+            <td colspan="3" class="midtd"><span class="topspan">extracted_results: {{info.extracted_results}}</span></td> <!-- Accessing nested dictionary -->
         </tr>
         <tr class="vulnTrMid">
-            <td colspan="1" class="midtd"><span class="topspan">Author: {{info.info.author}}</span></td> <!-- Accessing nested dictionary -->
-
-            <td colspan="2" class="midtd"><span class="topspan">Tags: {{info.info.tags}}</span></td> <!-- Accessing nested dictionary -->
-
-            <td class="midtd"><span class="topspan">Status: {{info.info.status}}</span></td> <!-- Accessing nested dictionary -->
-
-            <td  class="midtd"><span class="topspan">Date: {{info.date}}</span></td> <!-- Accessing nested dictionary -->
+            <td colspan="1" class="midtd"><span class="topspan">Tags: {{info.info.tags}}</span></td> <!-- Accessing nested dictionary -->
+            <td colspan="3" class="midtd"><span class="topspan">Author: {{info.info.author}}</span></td> <!-- Accessing nested dictionary -->
         </tr>
-        <tr class="vulnTr">
+        <tr class="vulnTrMidMid">
+            <td colspan="3" class="midtd"><span class="topspan">template_url: {{info.template_url}}</span></td> <!-- Accessing nested dictionary -->
+        </tr>
+        <tr class="vulnTrMid">
             {% if info.info.severity == 'info' %} <!-- Accessing nested dictionary -->
                 <td colspan="1" class="info">Severity: {{info.info.severity}}</td> <!-- Accessing nested dictionary -->
             {% elif info.info.severity == 'low' %} <!-- Accessing nested dictionary -->
@@ -126,13 +129,19 @@
             <td colspan="2" class="vulnTd"><span class="midspan">Max Request: {{info.info.metadata}}</span></td> <!-- Accessing nested dictionary -->
         </tr>
         <tr class="vulnTr" >
-            <td colspan="1" class="vulnTd">Description:</td>
+            <td colspan="1" class="vulnTd"><b>Description:</b></td>
         </tr>
         <tr class="vulnTr" >
             <td colspan="2" class="vulnTd"><span class="despspan">{{info.info.description}}</span></td> <!-- Accessing nested dictionary -->
         </tr>
         <tr class="vulnTr" >
-            <td colspan="2" class="vulnTd">curl_command: <span class="despspan">{{info.info.curl_command}}</span></td> <!-- Accessing nested dictionary -->
+            <td colspan="1" class="vulnTd"><b>Reference:</b></td>
+        </tr>
+        <tr class="vulnTr" >
+            <td colspan="2" class="vulnTd"><span class="despspan">{{info.info.reference}}</span></td> <!-- Accessing nested dictionary -->
+        </tr>
+        <tr class="vulnTr" >
+            <td colspan="2" >curl_command: <span class="despspan">{{info.curl_command}}</span></td> <!-- Accessing nested dictionary -->
         </tr>
     </tbody>
 

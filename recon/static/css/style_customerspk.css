@@ -33,9 +33,15 @@
 }
 
 .vulnTrMid {
-    background-color: #DBE5F1;
+    background-color: #FFFFFF;
     width: auto;
     height: 75px;
+}
+
+.vulnTrMidMid{
+    background-color: #DBE5F1;
+    width: auto;
+    height: 40px;
 }
 
 .vulnTr {
