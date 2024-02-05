@@ -8,6 +8,8 @@ EGO provides a user-friendly GUI interface, eliminating the need for spreadsheet
 
 ![demo](https://github.com/PolitoInc/EGOAlpha/assets/143764389/94619dd1-a8a3-420c-92b4-6c66f00ff0d7)
 
+![improved](https://github.com/PolitoInc/EGOAlpha/assets/143764389/6e883648-d6f7-4c21-a4fb-94e05269ca80)
+
 EGO also provides a REST API for reconnaissance agents to connect back to. This allows penetration testers to scan isolated networks and retrieve nmap logs using only the HTTP protocol.
 
 ## Installation
