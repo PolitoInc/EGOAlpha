@@ -63,10 +63,10 @@ class create_egocontrol(forms.ModelForm):
             'ScanGroupingProject': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
             'ScanProjectByName': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
             'OutOfScope': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 450px;'}),
-            'chunk_size': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 50px;'}),
-            'CoolDown': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 50px;'}),
-            'CoolDown_Between_Queries': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 50px;'}),
-            'Port': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 70px;'}),
+            'chunk_size': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'CoolDown': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'CoolDown_Between_Queries': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 120px;'}),
+            'Port': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 120px;'}),
             'HostAddress': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
             'passiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'agressiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -153,10 +153,38 @@ severity_CHOICES =(
     ("unknown", "unknown"),
 )
 
-class GnawControlBoards_create_Form(forms.ModelForm):
+
+class create_gnawcontrol(forms.ModelForm):
     class Meta:
         model = GnawControl
-        fields = '__all__'
+        fields = [
+            'NucleiScan', 'Ipv_Scan', 'egoAgent', 'LoopCustomersBool', 'OutOfScope', 'ScanProjectByID', 
+            'ScanGroupingProject', 'ScanProjectByName', 'Customer_chunk_size', 'Record_chunk_size', 
+            'Global_Nuclei_CoolDown', 'Global_Nuclei_RateLimit', 'Port', 'HostAddress', 'severity', 
+            'Gnaw_Completed', 'failed', 'scan_objects', 'SubdomainsSeen'
+        ]
+        widgets = {
+            'NucleiScan': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'Ipv_Scan': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'egoAgent': forms.Select(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'LoopCustomersBool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'OutOfScope': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 450px;'}),
+            'ScanProjectByID': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'ScanGroupingProject': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
+            'ScanProjectByName': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
+            'Customer_chunk_size': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'Record_chunk_size': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'Global_Nuclei_CoolDown': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'Global_Nuclei_RateLimit': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'Port': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 120px;'}),
+            'HostAddress': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'severity': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'Gnaw_Completed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'failed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'scan_objects': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'SubdomainsSeen': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+        }
+
 
 class customer_pk(forms.ModelForm):
     class Meta:

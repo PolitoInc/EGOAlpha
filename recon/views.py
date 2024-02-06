@@ -415,14 +415,14 @@ def RecordDelete(request, pk):
 def GnawControlBoards(request):
     gnaw = GnawControl.objects.all()
     customers = Customers.objects.all()
-    form = GnawControlBoards_create_Form()
+    form = create_gnawcontrol()
     create = GnawControlCreateViewSet()
     return TemplateResponse(request, 'GnawControl/gnawControlBoards.html', {"gnaw": gnaw, "customers": customers, "create":create, "form": form})
 
 @login_required
 def GnawControlBoardsCreate(request):
     if request.method == 'GET':
-        form = GnawControlBoards_create_Form()
+        form = create_gnawcontrol()
         return TemplateResponse(request, f'GnawControl/gnawControlBoardsCreate.html', {"form": form})
     
     if request.method == 'POST':
@@ -440,14 +440,15 @@ def GnawControlBoardsPK(request, pk):
     results = GnawControl.objects.get(pk=pk)
     form = MantisFormCreate()
     if request.method == 'GET':
-        form = GnawControlBoards_create_Form(instance=results)
+        form = create_gnawcontrol(instance=results)
 
         return TemplateResponse(request, f'GnawControl/gnawControlBoardsPk.html', {"control": results, "form": form})
     if request.method == 'POST':
-        form = GnawControlBoards_create_Form(request.POST, instance=results or None)
+        form = create_gnawcontrol(request.POST, instance=results or None)
         if form.is_valid():
             form.save()
         return HttpResponseRedirect(f'/GnawControlBoard/{results.pk}')
+
 
 
 ## EGO

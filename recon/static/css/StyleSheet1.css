@@ -4,9 +4,42 @@
     font-size: 0.875rem;
 }
 
+.Customers_Create{
+    width: 100%;
+    padding-right: var(--bs-gutter-x, 40%);
+    padding-left: var(--bs-gutter-x, 25%);
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.Customers_Create form{
+    margin: 16px;
+    margin-top: 16px;
+    margin-right: 16px;
+    margin-bottom: 16px;
+    margin-left: 16px;
+    padding: 14px;
+}
+
+.egolabel, .form-control {
+    display: inline-block;
+    vertical-align: top;
+}
+
 .egolabel{
-    font-size: 20px;
+    font-size: 18px;
+    font-weight: bold;
     font-family: 'Arial';
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 10px;
+}
+
+}
+
+.helptext {
+    font-size: 12px;
+    color: #000;
 }
 
 .link {
@@ -38,6 +71,10 @@
   background-color: #e6e6fa; /* Lavender */
 }
 
+.logo{
+    height:200px;
+}
+
 .logoTitle {
   color: #000000; /* Black for better contrast */
   padding: 2px 4px; /* Optional: Add padding to enhance visibility of the background color */
@@ -51,12 +88,15 @@
     display: flex;
     align-items: center;
     color: #000000; /* Black for better contrast */
-    background-color: #f0f8ff; /* Alice blue */
+    background-color: #FFF; /* Alice blue */
 }
 
 .title .pageTitle {
     margin: auto;
+    font-size: 50px;
+    font-family: 'Arial';
     color: #000000; /* Black for better contrast */
+    font-weight: bold;
 }
 
 
