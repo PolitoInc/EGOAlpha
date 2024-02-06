@@ -11,14 +11,26 @@
 
 <div class="Customers_Create">
     <p>Welcome to Ego control board, </p>
-            <form action="{% url 'EgoControlCreate' %}" method="post">
-                {% csrf_token %}
+<form action="{% url 'EgoControlCreate' %}" method="post">
     {% csrf_token %}
-    {% bootstrap_form form %}
-    {% buttons %}
-        <button type="submit" class="btn btn-primary">Submit</button>
-    {% endbuttons %}
-                <input type="submit" value="OK">
-            </form>
+    {% for field in form %}
+    <div class="form-group">
+        <label for="{{ field.id_for_label }}" class="egolabel">
+            {{ field.label }}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+            <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+        {% endif %}
+        {% if field.default %}
+            <small class="form-text text-muted">{{ field.default|safe }}</small>
+        {% endif %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+
+
 </div>
 {% endblock %}

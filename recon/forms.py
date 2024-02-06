@@ -48,28 +48,76 @@ class CustomersForm(forms.ModelForm):
         self.fields['groupingProject'].initial = self.instance.groupingProject if self.instance.pk else 'Ego'
 
 class create_egocontrol(forms.ModelForm):
-    internal_scanner = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
-    passiveAttack = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
-    agressiveAttack = forms.BooleanField(initial=True, required=False, widget=forms.CheckboxInput())
-    portscan_bool = forms.BooleanField(initial=True, required=False, widget=forms.CheckboxInput())
-    versionscan_bool = forms.BooleanField(initial=True, required=False, widget=forms.CheckboxInput())
-    Scan_Scope_bool = forms.BooleanField(initial=True, required=False, widget=forms.CheckboxInput())
-    Scan_IPV_Scope_bool = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
-    Scan_DomainName_Scope_bool = forms.BooleanField(initial=True, required=False, widget=forms.CheckboxInput())
-    scriptscan_bool = forms.BooleanField(initial=True, required=False, widget=forms.CheckboxInput())
-    BruteForce = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
-    scan_records_censys = forms.BooleanField(initial=True, required=False, widget=forms.CheckboxInput())
-    crtshSearch_bool = forms.BooleanField(initial=True, required=False, widget=forms.CheckboxInput())
-    Update_RecordsCheck = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
-    LoopCustomersBool = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
-    Completed = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
-    Gnaw_Completed = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
-    failed = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())  
     class Meta:
         model = EgoControl
-        fields = '__all__'
-
-
+        fields = [
+            'ScanProjectByID', 'internal_scanner', 'ScanGroupingProject', 'ScanProjectByName', 'OutOfScope', 
+            'chunk_size', 'CoolDown', 'CoolDown_Between_Queries', 'Port', 'HostAddress', 'passiveAttack', 
+            'agressiveAttack', 'portscan_bool', 'versionscan_bool', 'Scan_Scope_bool', 'Scan_IPV_Scope_bool', 
+            'Scan_DomainName_Scope_bool', 'scriptscan_bool', 'BruteForce', 'BruteForce_WL', 'scan_records_censys', 
+            'crtshSearch_bool', 'Update_RecordsCheck', 'LoopCustomersBool', 'Completed', 'Gnaw_Completed', 'failed', 
+            'scan_objects'
+        ]
+        widgets = {
+            'ScanProjectByID': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'ScanGroupingProject': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
+            'ScanProjectByName': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
+            'OutOfScope': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 450px;'}),
+            'chunk_size': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 50px;'}),
+            'CoolDown': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 50px;'}),
+            'CoolDown_Between_Queries': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 50px;'}),
+            'Port': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 70px;'}),
+            'HostAddress': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'passiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'agressiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'portscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'versionscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'Scan_Scope_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'Scan_IPV_Scope_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'Scan_DomainName_Scope_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'scriptscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'BruteForce': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'BruteForce_WL': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'scan_records_censys': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'crtshSearch_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'Update_RecordsCheck': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'LoopCustomersBool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'Completed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'Gnaw_Completed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'failed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'scan_objects': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+        }
+    def __init__(self, *args, **kwargs):
+        super(create_egocontrol, self).__init__(*args, **kwargs)
+        self.fields['ScanProjectByID'].initial = 'Unique Identifier'
+        self.fields['internal_scanner'].initial = False
+        self.fields['ScanGroupingProject'].initial = 'Group Name'
+        self.fields['ScanProjectByName'].initial = 'Project Name'
+        self.fields['OutOfScope'].initial = ''
+        self.fields['chunk_size'].initial = 12
+        self.fields['CoolDown'].initial = 2
+        self.fields['CoolDown_Between_Queries'].initial = 6
+        self.fields['Port'].initial = 9000
+        self.fields['HostAddress'].initial = 'http://127.0.0.1'
+        self.fields['passiveAttack'].initial = False
+        self.fields['agressiveAttack'].initial = True
+        self.fields['portscan_bool'].initial = True
+        self.fields['versionscan_bool'].initial = True
+        self.fields['Scan_Scope_bool'].initial = True
+        self.fields['Scan_IPV_Scope_bool'].initial = False
+        self.fields['Scan_DomainName_Scope_bool'].initial = True
+        self.fields['scriptscan_bool'].initial = True
+        self.fields['BruteForce'].initial = False
+        self.fields['BruteForce_WL'].initial = list()
+        self.fields['scan_records_censys'].initial = False
+        self.fields['crtshSearch_bool'].initial = True
+        self.fields['Update_RecordsCheck'].initial = False
+        self.fields['LoopCustomersBool'].initial = False
+        self.fields['Completed'].initial = False
+        self.fields['Gnaw_Completed'].initial = False
+        self.fields['failed'].initial = False
+        self.fields['scan_objects'].initial = list()
+        
 class update_egocontrol(forms.ModelForm):
     class Meta:
         model = EgoControl

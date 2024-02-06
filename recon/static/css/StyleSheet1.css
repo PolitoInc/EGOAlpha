@@ -4,7 +4,10 @@
     font-size: 0.875rem;
 }
 
-
+.egolabel{
+    font-size: 20px;
+    font-family: 'Arial';
+}
 
 .link {
   align: center;

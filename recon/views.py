@@ -62,7 +62,7 @@ class SignUpView(generic.CreateView):
     template_name = './auth/signup.html'
     
     def form_valid(self, form):
-        signup_key = form.cleaned_data.get('Replaceme')
+        signup_key = form.cleaned_data.get('replaceme')
         if signup_key == 'string':  # replace 'string' with your actual key
             response = super().form_valid(form)
             # Authenticate the user
