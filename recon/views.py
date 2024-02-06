@@ -438,7 +438,7 @@ def GnawControlBoardsCreate(request):
 @login_required
 def GnawControlBoardsPK(request, pk):
     results = GnawControl.objects.get(pk=pk)
-    form = MantisFormCreate()
+    form = create_mantiscontrol()
     if request.method == 'GET':
         form = create_gnawcontrol(instance=results)
 
@@ -538,7 +538,7 @@ def VulnBoardCreate(request):
     context ={}
     mantis = PythonNuclei.objects.all()
     cards = VulnCard.objects.all()
-    form = MantisFormCreate()
+    form = create_mantiscontrol()
     formdata = MantisDataCreate()
     if request.method == 'GET':
         form = MantisDataCreate(request.POST or None)
@@ -575,7 +575,7 @@ def VulnBoardDeletePK(request, pk):
 def VulnBoardCreatePK(request, pk):
     context ={}
     mantis = PythonNuclei.objects.get(pk=pk)
-    form = MantisFormCreate()
+    form = create_mantiscontrol()
     #cards = VulnCard.objects.get(pk=uuid.UUID(mantis.vulnCard_id))
     if request.method == 'GET':
         form = MantisDataCreate(instance=mantis)

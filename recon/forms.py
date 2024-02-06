@@ -268,34 +268,35 @@ class VulnCardData(forms.ModelForm):
             'pictures'
         )
 
-class MantisFormCreate(forms.Form):
-    vulnCard_id = forms.UUIDField()
-    Elevate_Vuln = forms.CharField(max_length=1000, required=False)
-    name = forms.CharField(max_length=1000)
-    callbackServer = forms.CharField(max_length=1000, required=False)
-    callbackServerKey = forms.CharField(max_length=1000, required=False)
-    request_method = forms.CharField(max_length=1000)
-    payloads = forms.CharField(widget=forms.Textarea(attrs={"rows":"5"}), required=False)
-    headers = SimpleArrayField(forms.CharField(max_length=256), required=False)
-    postData = forms.CharField(widget=forms.Textarea(attrs={"rows":"5"}), required=False)
-    ComplexPathPython = forms.CharField(widget=forms.Textarea(attrs={"rows":"5"}), required=False)
-    ComplexAttackPython = forms.CharField(widget=forms.Textarea(attrs={"rows":"5"}), required=False)
-    path = SimpleArrayField(forms.CharField(), required=False)
-    creds = SimpleArrayField(forms.CharField(max_length=256), required=False)
-    pathDeveloper = forms.CharField(widget=forms.Textarea(attrs={"rows":"5"}), required=False)
-    rawRequest = forms.CharField(widget=forms.Textarea(attrs={"rows":"5"}), required=False)
-    SSL = forms.CharField(max_length = 2048, required=False)
-    timeout_betweenRequest = forms.CharField(max_length = 2048, required=False)
-    repeatnumb = forms.CharField(max_length = 2048, required=False)
-    redirect = forms.CharField(max_length = 2048, required=False)
-    matchers_status = SimpleArrayField(forms.CharField(max_length=3))
-    matchers_headers = SimpleArrayField(forms.CharField(max_length=256), required=False)
-    matchers_bodys = SimpleArrayField(forms.CharField(max_length=256), required=False)
-    matchers_words = SimpleArrayField(forms.CharField(max_length=256), required=False)
-    shodan_query = SimpleArrayField(forms.CharField(max_length=256), required=False)
-    google_dork = forms.CharField(widget=forms.Textarea(attrs={"rows":"5"}), required=False)
-    tags = SimpleArrayField(forms.CharField(max_length=256))
-    tcpversioning = SimpleArrayField(forms.CharField(max_length=256), required=False)
+class create_mantiscontrol(forms.ModelForm):
+    class Meta:
+        model = MantisControls
+        fields = [
+            'NucleiScan', 'Ipv_Scan', 'LoopCustomersBool', 'OutOfScope', 'ScanProjectByID', 
+            'ScanGroupingProject', 'ScanProjectByName', 'Customer_chunk_size', 'Record_chunk_size', 
+            'Global_CoolDown', 'Global_RateLimit', 'Port', 'HostAddress', 'severity', 
+            'Elavate', 'Mantis_Completed', 'failed', 'scan_objects'
+        ]
+        widgets = {
+            'NucleiScan': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'Ipv_Scan': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'LoopCustomersBool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'OutOfScope': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 450px;'}),
+            'ScanProjectByID': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'ScanGroupingProject': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
+            'ScanProjectByName': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
+            'Customer_chunk_size': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'Record_chunk_size': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'Global_CoolDown': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'Global_RateLimit': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            'Port': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 120px;'}),
+            'HostAddress': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'severity': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'Elavate': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'Mantis_Completed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'failed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'scan_objects': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+        }
 
 class WordListGroupFormCreate(forms.Form):
     groupName = forms.CharField( max_length=256 )

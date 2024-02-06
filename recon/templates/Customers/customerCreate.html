@@ -7,13 +7,28 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="_Create">
     <form action="{% url 'CustomersCreate' %}" method="post">
     {% csrf_token %}
-    {% bootstrap_form form %}
-    {% buttons %}
-        <button type="submit" class="btn btn-primary">Submit</button>
-    {% endbuttons %}
-    </form>
-</div>
+    {% for field in form %}
+    <div class="form-group">
+        <label for="{{ field.id_for_label }}" class="egolabel">
+            {{ field.label }}
+        </label>
+        {{ field }}
+
+        {% if field.help_text %}
+            <span class="form">
+                {{ field.help_text|safe }}
+            </span>
+        {% endif %}
+        {% if field.default %}
+            <span class="form">
+                {{ field.default|safe }}
+            </span>
+        {% endif %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
 {% endblock %}

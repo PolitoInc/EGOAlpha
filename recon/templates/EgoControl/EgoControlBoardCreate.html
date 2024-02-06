@@ -9,7 +9,7 @@ Create Ego Controlboard
 {% block content %}
 
 
-<div class="Customers_Create">
+<div class="_Create">
 <form action="{% url 'EgoControlCreate' %}" method="post">
     {% csrf_token %}
     {% for field in form %}
@@ -20,7 +20,7 @@ Create Ego Controlboard
 {{ field }}
 
         {% if field.help_text %}
-            <span class="form">
+            <span class="spanform">
             {{ field.help_text|safe }}
             </span>
         {% endif %}

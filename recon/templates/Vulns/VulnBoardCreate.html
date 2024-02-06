@@ -6,25 +6,8 @@
             Mantis Controlboard
 {% endblock %}
 {% block content %}
-        <div class="VulnCardDisplayGrid">
-<h2>Mantis Vulns</h2>
-            {% for res in mantis %}
-            <p>
-                <a href="/VulnBoard/create/{{ res.id}}">{{ res.id}}</a></br>
-                {{ res.name}}</br>
-                {{ res.vulnClass}}</br>
-                {{ res.severity}}</br>
+        <div class="_Create">
                 <form action="/VulnBoard/create/delete/{{ res.id}}" method="GET">
-                    {% csrf_token %}
-                    <input type="hidden" name="_method" value="delete">
-                    <input type="submit" value="Delete">
-                </form>
-            </p>
-            {% endfor %}
-        </div>
-
-        <div class="VulnCreationGrid">
-            <form action="{% url 'VulnBoardCreate' %}" method="post">
                 {% csrf_token %}
                 {% for field in form %}
                 <div class="form-group">
@@ -47,7 +30,6 @@
                 {% endfor %}
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>
+            </p>
         </div>
-
-    </div>
 {% endblock %}

@@ -4,7 +4,29 @@
     font-size: 0.875rem;
 }
 
-.Customers_Create{
+.spanform{
+    display: block;
+}
+
+footer {
+    align: center;
+    background-color: #f8f9fa;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.footer-links a {
+    margin: 0 15px;
+    color: #333;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    color: #007bff;
+}
+
+
+._Create{
     width: 100%;
     padding-right: var(--bs-gutter-x, 40%);
     padding-left: var(--bs-gutter-x, 25%);
@@ -12,7 +34,7 @@
     margin-left: auto;
 }
 
-.Customers_Create form{
+._Create form{
     margin: 16px;
     margin-top: 16px;
     margin-right: 16px;
@@ -24,6 +46,7 @@
 .egolabel, .form-control {
     display: inline-block;
     vertical-align: top;
+    width:35%;
 }
 
 .egolabel{
@@ -33,6 +56,7 @@
     display: inline-block;
     vertical-align: top;
     margin-right: 10px;
+    width:325px;
 }
 
 }
