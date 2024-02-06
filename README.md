@@ -16,6 +16,14 @@ EGO also provides a REST API for reconnaissance agents to connect back to. This 
 
 1. Install the required Python packages: 
 2. Install Postgres and create a user named 'postgres'.
+   ```
+   sudo -i -u postgres psql
+   CREATEUSER postgres;
+   ALTER USER postgres WITH PASSWORD 'test';
+   CREATE DATABASE test;
+   \l -list
+   \q
+   ```
 3. In the `settings.py` file, change the DATABASES PASSWORD AND USER to the Postgres values.
 4. Install nmap:
    ```
