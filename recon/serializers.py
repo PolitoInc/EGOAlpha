@@ -623,10 +623,10 @@ class TotalFoundVulnSeerializers(serializers.ModelSerializer):
 #############################################################
 #############################################################
 
-class PythonNucleiSerializer(serializers.ModelSerializer):
+class MantisSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = PythonNuclei
+        model = Mantis
         fields = (
             'id',
             'vulnCard_id',

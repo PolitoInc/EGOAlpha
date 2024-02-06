@@ -10,33 +10,29 @@
 {% block content %}
 
 
-<div class="Customers_Create">
-
-
-
-<form action="{% url 'WordClassCreate' %}" method="post">
-{% csrf_token %}
-    {# This will display the radio button HTML for you #}
-    {{ form.as_p }}
-<input type="submit" value="OK">
-    {# You'll need a submit button or similar here to actually send the form #}
-</form>
-
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <input type="file" name="uploaded_file">
-    <button type="submit">Upload</button>
-    </form>
-
-    {% if filename %}
-    <p>File uploaded: <a href="{{ filename }}">{{ filename }}</a></p>
-    {% endif %}
-
-<form action="{% url 'createSuperList' %}" method="post">
-aaaaaaaaa
-{% csrf_token %}
-<input type="submit" value="OK">
-</form>
+<div class="_Create">
+            <form action="{% url 'WordClassCreate' %}" method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="form-group">
+            <label for="{{ field.id_for_label }}" class="egolabel">
+                {{ field.label }}
+            </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <span class="form">
+                        {{ field.help_text|safe }}
+                        </span>
+                    {% endif %}
+                    {% if field.default %}
+                        <span class="form">
+                        {{ field.default|safe }}
+                        </span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
 </div>
 {% for w in WordList %}
 <p>{{w.id}}</br>

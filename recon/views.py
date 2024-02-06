@@ -536,7 +536,7 @@ def VulnBoards(request):
 
 def VulnBoardCreate(request):
     context ={}
-    mantis = PythonNuclei.objects.all()
+    mantis = Mantis.objects.all()
     cards = VulnCard.objects.all()
     form = create_mantiscontrol()
     formdata = MantisDataCreate()
@@ -566,7 +566,7 @@ def VulnBoardCreate(request):
 @login_required
 
 def VulnBoardDeletePK(request, pk):
-    Control = PythonNuclei.objects.get(pk=pk)
+    Control = Mantis.objects.get(pk=pk)
     Control.delete() 
     return HttpResponseRedirect(f'/VulnBoard/create/')
 
@@ -574,7 +574,7 @@ def VulnBoardDeletePK(request, pk):
 
 def VulnBoardCreatePK(request, pk):
     context ={}
-    mantis = PythonNuclei.objects.get(pk=pk)
+    mantis = Mantis.objects.get(pk=pk)
     form = create_mantiscontrol()
     #cards = VulnCard.objects.get(pk=uuid.UUID(mantis.vulnCard_id))
     if request.method == 'GET':
@@ -605,11 +605,11 @@ def VulnBoardCreatePK(request, pk):
 
 def VulnCardCreate(request):
     queryset = VulnCard.objects.all()
-    form = VulnCardData()
+    form = create_mantisCardCreate()
     if request.method == 'GET':
         return TemplateResponse(request, "Vulns/vulncards.html", {"results": queryset, "form": form })
     if request.method == 'POST':
-        form = VulnCardData(request.POST  or None)
+        form = create_mantisCardCreate(request.POST  or None)
         if form.is_valid():
             form.save()
         return HttpResponseRedirect(f'/VulnBoard/create/')
@@ -618,11 +618,11 @@ def VulnCardCreate(request):
 
 def VulnCardPK(request, pk):
     queryset = VulnCard.objects.get(pk=pk)
-    form = VulnCardData(instance=queryset)
+    form = create_mantisCardCreate(instance=queryset)
     if request.method == 'GET':
         return TemplateResponse(request, "Vulns/VulnCard.html", {"results": queryset, "form": form})
     if request.method == 'POST':
-        form = VulnCardData(request.POST  or None, instance=queryset)
+        form = create_mantisCardCreate(request.POST  or None, instance=queryset)
         if form.is_valid():
             form.save()
         return HttpResponseRedirect(f'/VulnBoard/create/{pk}')
@@ -1069,17 +1069,17 @@ class ThreatModelingViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ThreatModelingSerializer
     queryset = ThreatModeling.objects.all()
 
-class PythonNucleiListViewSet(BaseView, generics.ListAPIView):
-    serializer_class = PythonNucleiSerializer
-    queryset = PythonNuclei.objects.all()
+class MantisListViewSet(BaseView, generics.ListAPIView):
+    serializer_class = MantisSerializer
+    queryset = Mantis.objects.all()
 
-class PythonNucleiCreateViewSet(BaseView, generics.CreateAPIView):
-    serializer_class = PythonNucleiSerializer
-    queryset = PythonNuclei.objects.all()
+class MantisCreateViewSet(BaseView, generics.CreateAPIView):
+    serializer_class = MantisSerializer
+    queryset = Mantis.objects.all()
 
-class PythonNucleiViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = PythonNucleiSerializer
-    queryset = PythonNuclei.objects.all()
+class MantisViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = MantisSerializer
+    queryset = Mantis.objects.all()
 
 class VulnCardListViewSet(BaseView, generics.ListCreateAPIView):
     serializer_class = VulnCardSerializer

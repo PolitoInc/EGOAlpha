@@ -217,7 +217,7 @@ class customer_pk(forms.ModelForm):
 ### MantisData create 
 class MantisDataCreate(forms.ModelForm):
     class Meta:
-        model = PythonNuclei
+        model = Mantis
         fields = [
             'vulnCard_id',
             'Elevate_Vuln',
@@ -248,25 +248,30 @@ class MantisDataCreate(forms.ModelForm):
             'tcpversioning'
             ]
 
-class VulnCardData(forms.ModelForm):
+class create_mantisCardCreate(forms.ModelForm):
     class Meta:
         model = VulnCard
-        fields = (
+        fields = [
+            'name', 'vulnClass', 'author', 'severity', 'cvss_metrics', 'cvss_score', 
+            'cwe_id', 'description', 'impact', 'proof_of_concept', 'remediation', 
+            'references', 'pictures'
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'vulnClass': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'author': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'severity': forms.Select(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'cvss_metrics': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'cvss_score': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'cwe_id': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'impact': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'proof_of_concept': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'remediation': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'references': forms.URLInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+            'pictures': forms.ClearableFileInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
+        }
 
-            'name',
-            'vulnClass',
-            'author',
-            'severity',
-            'cvss_metrics',
-            'cvss_score',
-            'cwe_id',
-            'description',
-            'impact',
-            'proof_of_concept',
-            'remediation',
-            'references',
-            'pictures'
-        )
 
 class create_mantiscontrol(forms.ModelForm):
     class Meta:
