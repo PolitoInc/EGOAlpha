@@ -15,36 +15,37 @@ from recon.serializers import *
 
 
 
-class FormsCustomersCreate(forms.ModelForm):
-
+class CustomersForm(forms.ModelForm):
     class Meta:
         model = Customers
-        fields = [
-            'user',
-            'groupingProject', 
-            'nameProject', 
-            'nameCustomer', 
-            'URLCustomer', 
-            'customDaysUntilNextScan', 
-            'toScanDate', 
-            'endToScanDate', 
-            'lastEgoScan', 
-            'EgoReconScan', 
-            'reconOnly', 
-            'passiveAttack', 
-            'agressiveAttack', 
-            'notes', 
-            'OutOfScopeString', 
-            'urlScope', 
-            'outofscope', 
-            'domainScope', 
-            'Ipv4Scope', 
-            'Ipv6Scope', 
-            'FoundTLD', 
-            'FoundASN', 
-            'skipScan',
-    
-        ]
+        fields = ['user', 'groupingProject', 'nameProject', 'nameCustomer', 'URLCustomer', 'customDaysUntilNextScan', 'toScanDate', 'endToScanDate', 'EgoReconScan', 'reconOnly', 'passiveAttack', 'agressiveAttack', 'notes', 'OutOfScopeString', 'urlScope', 'outofscope', 'domainScope', 'Ipv4Scope', 'Ipv6Scope', 'FoundTLD', 'FoundASN', 'skipScan']
+        widgets = {
+            'user': forms.Select(attrs={'class': 'form-control', 'style': 'width:300px;'}),
+            'groupingProject': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:300px;'}),
+            'nameProject': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:300px;', 'font-size': '15'}),
+            'nameCustomer': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:300px;'}),
+            'URLCustomer': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:400px;'}),
+            'customDaysUntilNextScan': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:200px;'}),
+            'toScanDate': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'style': 'width:400px;'}),
+            'endToScanDate': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'style': 'width:400px;'}),
+            'EgoReconScan': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
+            'reconOnly': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
+            'passiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
+            'agressiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'OutOfScopeString': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'urlScope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'outofscope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'domainScope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'Ipv4Scope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'Ipv6Scope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'FoundTLD': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'FoundASN': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'skipScan': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
+        }
+    def __init__(self, *args, **kwargs):
+        super(CustomersForm, self).__init__(*args, **kwargs)
+        self.fields['groupingProject'].initial = self.instance.groupingProject if self.instance.pk else 'Ego'
 
 class create_egocontrol(forms.ModelForm):
     internal_scanner = forms.BooleanField(initial=False, required=False, widget=forms.CheckboxInput())
@@ -67,6 +68,7 @@ class create_egocontrol(forms.ModelForm):
     class Meta:
         model = EgoControl
         fields = '__all__'
+
 
 class update_egocontrol(forms.ModelForm):
     class Meta:
@@ -107,32 +109,6 @@ class GnawControlBoards_create_Form(forms.ModelForm):
     class Meta:
         model = GnawControl
         fields = '__all__'
-        
-
-class customer_Create(forms.Form):
-    groupingProject = forms.CharField(max_length=100, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Please provide the groups name example BugCrowd, Hackerone, or WorkPlace</fieldset>')
-    nameProject = forms.CharField(max_length=100, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Please provide a Covert Name for the project, this will help keep your project a secret from other users.</fieldset>')
-    nameCustomer = forms.CharField(max_length=100, help_text='<fieldset style="background-color: lightblue;display: inline-block;">The real name of the customer, this is a secret</fieldset>')
-    URLCustomer = forms.CharField(max_length = 2048, required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">The main url for the customer, or the BugBounty url to the customer platform. </fieldset>')
-    customDaysUntilNextScan = forms.IntegerField(initial='30', required=False)
-    toScanDate = forms.DateField(widget=DateInput, required=False)
-    endToScanDate = forms.DateField(widget=DateInput, required=False)
-    skipScan = forms.BooleanField(initial='False', required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Default is false, this will tell the engine\'s to skip this target if an <b>All Customer scan</b> is ran.</fieldset>')
-    reconOnly = forms.BooleanField(initial='False', required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Will tell all attack engines to skip this customer.</fieldset>')
-    passiveAttack = forms.BooleanField(initial='False', required=False)
-    agressiveAttack = forms.BooleanField(initial='False', required=False)
-    notes = forms.CharField(widget=forms.Textarea(attrs={"rows":"5"}), required=False)
-    OutOfScopeString = forms.CharField(max_length = 75, required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">This is a list of strings is a negative search for scope, so it will make every domain with the string in it be scanned.</fieldset>')
-    urlScope = SimpleArrayField(forms.URLField(max_length = 2048), required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Must provide a full url example: https://example.com/ </fieldset>')
-    outofscope = SimpleArrayField(forms.CharField(max_length=256), required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">List of out of scope domains or subdomains not to be included in scans.</fieldset>')
-    domainScope = SimpleArrayField(forms.CharField(max_length=256), required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">List of in scope domains, example www.example.com, *.example.com, or *.example.*</fieldset>')
-    Ipv4Scope = SimpleArrayField(forms.CharField(max_length=256) , required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Accepts a list of ip address or cidr examples 127.0.0.1, 192.168.0.0/21</fieldset>')
-    Ipv6Scope = SimpleArrayField(forms.CharField(max_length=256), required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">IPV6 example [343f::34::]</fieldset>')
-    FoundTLD = SimpleArrayField(forms.CharField(max_length=256, initial='[]') , required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Api area</fieldset>')
-    FoundASN = SimpleArrayField(forms.CharField(max_length=256, initial='[]'), required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Api area</fieldset>')
-    lastEgoScan = forms.DateField(widget=DateInput, required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Api area</fieldset>')
-    EgoReconScan = forms.BooleanField(initial='False', required=False, help_text='<fieldset style="background-color: lightblue;display: inline-block;">Api area</fieldset>')
-
 
 class customer_pk(forms.ModelForm):
     class Meta:

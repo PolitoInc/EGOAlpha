@@ -62,7 +62,7 @@ class SignUpView(generic.CreateView):
     template_name = './auth/signup.html'
     
     def form_valid(self, form):
-        signup_key = form.cleaned_data.get('REPLACEME')
+        signup_key = form.cleaned_data.get('Replaceme')
         if signup_key == 'string':  # replace 'string' with your actual key
             response = super().form_valid(form)
             # Authenticate the user
@@ -252,22 +252,22 @@ def get_latitude_location(country_name, city):
 @login_required
 def CustomersCreate(request, format=None):
     if request.method == 'POST':
-        form = FormsCustomersCreate(request.POST)
+        form = CustomersForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('/Customers/customerCreate.html')
     elif request.method == 'GET':
-        form = FormsCustomersCreate()
+        form = CustomersForm()
     else:
-        form = FormsCustomersCreate()
+        form = CustomersForm()
     return TemplateResponse(request, 'Customers/customerCreate.html', {'form': form})
-    
+
 #retrieve customer record
 @login_required
 def CustomerPk(request, pk, format=None):
     if request.method == 'GET':
         customer = get_object_or_404(Customers, pk=pk)
-        form = FormsCustomersCreate(instance=customer)
+        form = CustomersForm(instance=customer)
         serializer = CustomerRecordSerializer(customer)
         data = serializer.data
         # get longitude and latitude from nested records from GEOCODES
@@ -317,14 +317,14 @@ def CustomerPk(request, pk, format=None):
 
     elif request.method == 'POST':
         customer = get_object_or_404(Customers, pk=pk)
-        form = FormsCustomersCreate(request.POST, instance=customer)
+        form = CustomersForm(request.POST, instance=customer)
         if form.is_valid():
             results = form.save()
             return HttpResponseRedirect(f'/Customers/{results.pk}/')
         else:
             return HttpResponse("Form is not valid", status=400)
     else:
-        form = FormsCustomersCreate(instance=customer)
+        form = CustomersForm(instance=customer)
     return render(request, 'form_template.html', {'form': form})
 
 @login_required
@@ -460,7 +460,6 @@ def EgoControlBoard(request):
     return TemplateResponse(request, 'EgoControl/EgoControlBoard.html', {"controls": response, "customers": customers})
 
 @login_required
-
 def EgoControlCreate(request):
     if request.method == 'POST':
         form = create_egocontrol(request.POST)
@@ -472,22 +471,22 @@ def EgoControlCreate(request):
     return TemplateResponse(request, 'EgoControl/EgoControlBoardCreate.html', {'form': form})  # replace 'template_name.html' with your template name
 
 
-@login_required
 
+
+@login_required
 def EgoControlBoardDelete(request, pk):
     Control = get_object_or_404(EgoControl, pk=pk)
     Control.delete() 
     return HttpResponseRedirect('/EgoControlBoard/')
 
 @login_required
-
 def EgoControlBoardpk(request, pk):
     results = EgoControl.objects.get(pk=pk)
     if request.method == 'GET':
-        form = create_egocontrol(instance=results)
+        form = EgoControlForm(instance=results)
         
     elif request.method == 'POST':
-        form = create_egocontrol(request.POST, instance=results)
+        form = EgoControlForm(request.POST, instance=results)
         if form.is_valid():
             results= form.save()
             return HttpResponseRedirect(f'/EgoControlBoard/{results.pk}')

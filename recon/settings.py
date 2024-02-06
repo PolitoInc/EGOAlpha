@@ -1,4 +1,4 @@
-mport os
+import os
 
 """
 Django settings for tutorial project.
@@ -89,9 +89,9 @@ LOGOUT_REDIRECT_URL = '/login/'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'First_Web_page',
+        'NAME': 'Replaceme',
         'USER': 'postgres',
-        'PASSWORD': 'postgres',
+        'PASSWORD': 'Replaceme',
         'HOST': 'localhost',
         'PORT': '5432',
     }
