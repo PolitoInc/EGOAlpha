@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block title %}
-            <h1>VulnBoard</h1>
+            Mantis Controlboard
 {% endblock %}
 {% block content %}
         <div class="VulnCardDisplayGrid">
@@ -26,10 +26,26 @@
         <div class="VulnCreationGrid">
             <form action="{% url 'VulnBoardCreate' %}" method="post">
                 {% csrf_token %}
+                {% for field in form %}
+                <div class="form-group">
+            <label for="{{ field.id_for_label }}" class="egolabel">
+                {{ field.label }}
+            </label>
+            {{ field }}
 
-                {{ form.as_p }}
-                <input type="submit" value="OK">
-
+                    {% if field.help_text %}
+                        <span class="form">
+                        {{ field.help_text|safe }}
+                        </span>
+                    {% endif %}
+                    {% if field.default %}
+                        <span class="form">
+                        {{ field.default|safe }}
+                        </span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Submit</button>
             </form>
         </div>
 
