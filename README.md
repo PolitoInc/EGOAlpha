@@ -62,7 +62,7 @@ After=network.target
 Type=simple
 User=root
 UMask=007
-ExecStart=/home/ego/tools/interact/interactsh-server -domain example.com -t Token -cert '/home/ego/egodev/cert/cert.crt' -privkey '/home/ego/egodev/cert/cert.key' -a
+ExecStart= python3 manage runserver 0.0.0.0:5000
 Restart=on-failure
 
 # Configures the time to wait before service is stopped forcefully.
