@@ -62,7 +62,7 @@ class SignUpView(generic.CreateView):
     template_name = './auth/signup.html'
     
     def form_valid(self, form):
-        signup_key = form.cleaned_data.get('replaceme')
+        signup_key = form.cleaned_data.get('meow')
         if signup_key == 'string':  # replace 'string' with your actual key
             response = super().form_valid(form)
             # Authenticate the user
@@ -487,7 +487,7 @@ def EgoControlBoardpk(request, pk):
             return HttpResponse("Form is not valid", status=400)
     else:
         form = create_egocontrol(instance=results)
-
+    return TemplateResponse(request, 'EgoControl/EgoControlBoardpk.html', {"control": results, "form":form})
 #VULNS 
 # list vulns found
 @login_required
