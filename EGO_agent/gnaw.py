@@ -26,6 +26,7 @@ import traceback
 import dask.array as dd
 from nested_lookup import nested_delete
 import datetime
+import uuid
 # custom imports
 
 import EgoSettings

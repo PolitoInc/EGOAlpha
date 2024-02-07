@@ -37,12 +37,17 @@ def DNSCRESOLVER(rec, idsList):
                 pass
         return(storea)
     except Exception as E:
-
+        print(E)
+        
 class EgoDns:
-
     def Dns_Resolver(domain_key_set, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=None):
         try:
+            print('DNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNS')
+            print('DNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNS', domain_key_set)
+            print('DNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNSDNS')
+            print(bool(domain_key_set['subDomain']))
             if bool(domain_key_set['subDomain']) == True:
+                print(f'Dns_Resolver        {domain_key_set}')
                 subDomain= domain_key_set['subDomain']
                 Record_id= domain_key_set['id']
                 DNS_id= dict.fromkeys(['record_id'],Record_id)
@@ -89,24 +94,29 @@ class EgoDns:
                                 if Recordsdata:
                                     metaRecords.update(Recordsdata)
                                 else:
+                                    print(f'im false but {Recordsdata}')
                             elif i == "AAAA":
                                 Recordsdata = DNSCRESOLVER(s, ["NS","CNAME"])
                                 if Recordsdata:
                                     metaRecords.update(Recordsdata)
                                 else:
+                                    print(f'im false but {Recordsdata}')
                             elif i == "CNAME":
                                 Recordsdata = DNSCRESOLVER(s, ["NS","AAAA","A"])
                                 if Recordsdata:
                                     metaRecords.update(Recordsdata)
                                 else:
+                                    print(f'im false but {Recordsdata}')
                             else:
                                 pass
                     except Exception as E:
+                        print('rec_stor', E)
                         continue
                 CHECKSrec_stor= bool(rec_stor)
                 CHECKSmetaRecords= bool(metaRecords)
                 if CHECKSmetaRecords is True:
                     DIC = {}
+                    print('metaRecords',metaRecords)
                     DIC.update(rec_stor)
                     DIC.update(DNS_id)
                     md5_hash = hashlib.md5(json.dumps(DIC, sort_keys=True).encode('utf-8')).hexdigest()
@@ -114,27 +124,34 @@ class EgoDns:
                     DIC.update(results)
                     
                     recs= json.dumps(DIC)
+                    print('recs dns', recs)
                     DNSAuthCertRipperUrlPost = f"{HostAddress}:{Port}/api/DNSAuth/"
                     #if auth_token_json:
+                    print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   auth_token_json',auth_token_json)
                     
                     postRecords = requests.post(
                         DNSAuthCertRipperUrlPost, 
                         data=(recs), 
                         headers=headers,
-                        verify=False
+                        verify=False,
+                        timeout=60
                         )
                     responseRecords = postRecords.content
                     jsonresponseRecords = json.loads(responseRecords)
                     status = postRecords.status_code
+                    print('dns status1', status)
+                    print('jsonresponseRecords',jsonresponseRecords)
 
                 if CHECKSrec_stor is True:
                     DIC = {}
+                    print('CHECKSrec_stor',CHECKSrec_stor)
                     DIC.update(rec_stor)
                     DIC.update(DNS_id)
                     md5_hash = hashlib.md5(json.dumps(DIC, sort_keys=True).encode('utf-8')).hexdigest()
                     results = dict.fromkeys(['md5'],md5_hash)
                     DIC.update(results)
                     recs= json.dumps(DIC)
+                    print(f'dns here recs {recs}')
                     DNSAuthCertRipperUrlPost = f"{HostAddress}:{Port}/api/DNS/"
                     
                         
@@ -142,18 +159,24 @@ class EgoDns:
                         DNSAuthCertRipperUrlPost, 
                         data=(recs), 
                         headers=headers,
-                        verify=False
+                        verify=False,
+                        timeout=60
                         )
                     responseRecords = postRecords.text
                     jsonresponseRecords = json.loads(responseRecords)
                     status = postRecords.status_code
+                    print('dns status2', status)
+                    print('jsonresponseRecords',jsonresponseRecords)
 
                 else:
+                    print(f'failedfailedfailedfailedfailedfailedfailedfailedfailedfailedcerts {rec_stor} {metaRecords}')
                     return False
                 return True
             else:
+                print('dfart')
                 return False
         except Exception as E:
+            print('dns excpt', E)
             return False
 
     def dnsenum(fqdn,values,domainname, SCOPED=None, Customer_key=None, SET=None, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=None):
@@ -170,7 +193,8 @@ class EgoDns:
                     update_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/WordList/{values['id']}"
                     recs = json.dumps(dic)
                     time.sleep(0.05)
-                    req = requests.patch(update_url, data=recs, headers=headers, verify=False)
+                    req = requests.patch(update_url, data=recs, headers=headers, verify=False, timeout=60)
+                    print(req.status_code)
                     if auth_token_json:
                         dns_scan= ToolBox.Uploader(fqdn, SCOPED=SCOPED, Customer_key=Customer_key, SET=SET , HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                     else:
@@ -179,6 +203,7 @@ class EgoDns:
             else:
                 if ip:
                     dic = {}
+                    #print(values['Occurance'])
                     found_known = values['foundAt'].append(domainname)
                     new_Occurance = str(int(values['Occurance']) + 1)
                     oc_dict = dict.fromkeys(['Occurance'],new_Occurance)
@@ -192,7 +217,9 @@ class EgoDns:
                     dic.update(found_dic)
                     update_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/WordList/{values['id']}"
                                             
+                    #print('FindingUpdate',dic)
                     recs = json.dumps(dic)
+                    #print(recs)
                     time.sleep(0.05)
                     if auth_token_json:
                         dns_scan= ToolBox.Uploader(fqdn, SCOPED=SCOPED, Customer_key=Customer_key, SET=SET , HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
@@ -200,6 +227,7 @@ class EgoDns:
                         dns_scan= ToolBox.Uploader(fqdn, SCOPED=SCOPED, Customer_key=Customer_key, SET=SET , HostAddress=HostAddress, Port=Port)
                     return dns_scan
         except Exception as E:
+            #print(E)
             pass
 
 

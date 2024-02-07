@@ -426,7 +426,7 @@ def GnawControlBoardsCreate(request):
         return TemplateResponse(request, f'GnawControl/gnawControlBoardsCreate.html', {"form": form})
     
     if request.method == 'POST':
-        form = GnawControlBoards_create_Form(request.POST or None)
+        form = create_gnawcontrol(request.POST or None)
         if form.is_valid():
             form.cleaned_data['HostAddress'] = form.cleaned_data['HostAddress'].rstrip('/')  # Remove trailing slash
             form.save()
@@ -449,8 +449,6 @@ def GnawControlBoardsPK(request, pk):
             form.save()
         return HttpResponseRedirect(f'/GnawControlBoard/{results.pk}')
 
-
-
 ## EGO
 @login_required
 
@@ -471,9 +469,6 @@ def EgoControlCreate(request):
         form = create_egocontrol()
     return TemplateResponse(request, 'EgoControl/EgoControlBoardCreate.html', {'form': form})  # replace 'template_name.html' with your template name
 
-
-
-
 @login_required
 def EgoControlBoardDelete(request, pk):
     Control = get_object_or_404(EgoControl, pk=pk)
@@ -483,34 +478,15 @@ def EgoControlBoardDelete(request, pk):
 @login_required
 def EgoControlBoardpk(request, pk):
     results = EgoControl.objects.get(pk=pk)
-    if request.method == 'GET':
-        form = EgoControlForm(instance=results)
-        
-    elif request.method == 'POST':
-        form = EgoControlForm(request.POST, instance=results)
+    if request.method == 'POST':
+        form = create_egocontrol(request.POST, instance=results)
         if form.is_valid():
             results= form.save()
             return HttpResponseRedirect(f'/EgoControlBoard/{results.pk}')
         else:
             return HttpResponse("Form is not valid", status=400)
-    return TemplateResponse(request, 'EgoControl/EgoControlBoardpk.html', {"control": results, "form":form})
-
-
-@login_required
-
-def my_view(request):
-    form = EgoControlForm(request.POST or None)
-    if request.method == "POST":
-        # Have Django validate the form for you
-        if form.is_valid():
-            # The "display_type" key is now guaranteed to exist and
-            # guaranteed to be "displaybox" or "locationbox"
-            display_type = request.POST["display_type"]
-
-    # This will display the blank form for a GET request
-    # or show the errors on a POSTed form that was invalid
-    return render(request, 'your_template.html', {'form': form})
-
+    else:
+        form = create_egocontrol(instance=results)
 
 #VULNS 
 # list vulns found
@@ -536,7 +512,7 @@ def VulnBoards(request):
 
 def VulnBoardCreate(request):
     context ={}
-    mantis = Mantis.objects.all()
+    mantis = PythonMantis.objects.all()
     cards = VulnCard.objects.all()
     form = create_mantiscontrol()
     formdata = MantisDataCreate()
@@ -566,7 +542,7 @@ def VulnBoardCreate(request):
 @login_required
 
 def VulnBoardDeletePK(request, pk):
-    Control = Mantis.objects.get(pk=pk)
+    Control = PythonMantis.objects.get(pk=pk)
     Control.delete() 
     return HttpResponseRedirect(f'/VulnBoard/create/')
 
@@ -574,7 +550,7 @@ def VulnBoardDeletePK(request, pk):
 
 def VulnBoardCreatePK(request, pk):
     context ={}
-    mantis = Mantis.objects.get(pk=pk)
+    mantis = PythonMantis.objects.get(pk=pk)
     form = create_mantiscontrol()
     #cards = VulnCard.objects.get(pk=uuid.UUID(mantis.vulnCard_id))
     if request.method == 'GET':
@@ -968,7 +944,7 @@ def TotalVulnApp(request, pk):
         return HttpResponseRedirect('/Web/')
 
 
-def EgoControlForm(request):
+def EgoControlFormViews(request):
     response = EgoControl.objects.all()
     customers = Customers.objects.all()
     return TemplateResponse(request, 'EgoControl/EgoControlBoards.html', {"controls": response, "customers": customers})
@@ -1069,17 +1045,17 @@ class ThreatModelingViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ThreatModelingSerializer
     queryset = ThreatModeling.objects.all()
 
-class MantisListViewSet(BaseView, generics.ListAPIView):
-    serializer_class = MantisSerializer
-    queryset = Mantis.objects.all()
+class PythonMantisListViewSet(BaseView, generics.ListAPIView):
+    serializer_class = PythonMantisSerializer
+    queryset = PythonMantis.objects.all()
 
-class MantisCreateViewSet(BaseView, generics.CreateAPIView):
-    serializer_class = MantisSerializer
-    queryset = Mantis.objects.all()
+class PythonMantisCreateViewSet(BaseView, generics.CreateAPIView):
+    serializer_class = PythonMantisSerializer
+    queryset = PythonMantis.objects.all()
 
-class MantisViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = MantisSerializer
-    queryset = Mantis.objects.all()
+class PythonMantisViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PythonMantisSerializer
+    queryset = PythonMantis.objects.all()
 
 class VulnCardListViewSet(BaseView, generics.ListCreateAPIView):
     serializer_class = VulnCardSerializer

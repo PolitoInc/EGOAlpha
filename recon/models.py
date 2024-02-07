@@ -578,9 +578,9 @@ class FoundVulnDetails(BaseModel):
     matchedAt_bodys = models.CharField(max_length=2048, blank=True)
     curl_command = models.TextField(blank=True)
 
-class Mantis(BaseModel):
+class PythonMantis(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    vulnCard_id= models.ForeignKey(VulnCard, on_delete=models.CASCADE, related_name='Mantis_record')
+    vulnCard_id= models.ForeignKey(VulnCard, on_delete=models.CASCADE, related_name='PythonMantis_record')
     Elevate_Vuln = models.CharField(max_length=256, blank=True)
     name = models.CharField(max_length=256, null=True)
     callbackServer =  models.CharField(max_length = 2048, default='http://127.0.0.1')

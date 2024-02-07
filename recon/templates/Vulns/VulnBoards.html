@@ -1,45 +1,88 @@
-{% extends 'Template_base.html' %}
+{% extends 'Template_pk.html' %}
 {% load bootstrap5 %}
 {% load static %}
 
 {% block title %}
-            <h1>Customers</h1>
+VulnBoard
 {% endblock %}
 
-{% block content %}
+{% block customer_records %}
 <form action="{% url 'VulnBoards' %}" method="get">
   <input name="q" type="text" placeholder="Search...">
 </form>
-        <div class="vulnsGrid">
-            <div id="container" style="width: 500px; height: 500px;">
-                <canvas id="VulnsBoardChart" data-url="{% url 'VulnsBoardChart' %}"></canvas>
-            </div>
-            {% for tv in Template %}
-            <span><b>Name</b>  {{tv.info.name}}</span><span>   <b>Date</b>   {{tv.date}}</span></br>
-            <span style="font-size: 20px"><b>Severity</b>: {{tv.info.severity}}</span><span style="font-size: 14px">{{tv.info.classification.4}}</span></br>
-            <span style="font-size: 10px"><b>author</b>{{tv.info.author}}</span></br>
-            <span>Location: <a href="{{tv.matched_at}}">{{tv.matched_at}}</a></span></br>
-            {{tv.info.tags}}</br>
-            <b>description</b>
-            {{tv.info.description}}</br>
-            <hr style="border: 10px solid green;">
-            {% endfor %}
-{% for vuln in Vulns %}
-            <a href="/VulnBoard/{{vuln.id}}">{{vuln.id}}</a></br>
-            {{vuln.name}}</br>
-{{vuln.date}}</br>
-            {{vuln.vulnClass}}</br>
-            {{vuln.severity}}</br>
-            </br>
-            {% for n in vuln.location %}
-            <a href="{{n}}">{{n}}</a></br>
-            {% endfor %}
-            {% if vuln.match_headers%}
-            {{vuln.matchedAt_headers}}</br>
+<div class="VulnContainer">
+<table class="VulnContainer">
+<tbody class="vuln">
+{% for tv in Template %}
+        <tr class="vulnTrTop">
+            <td class="toptd"><span class="namespan">Name: {{tv.info.name}}</span></td>
+            <td class="toptd"><span class="topspan">Date: {{tv.date}}</span></td>
+        </tr>
+        <tr class="vulnTrMidMid">
+            <td class="midtd"><span class="topspan">Location: {{tv.matched_at}}</span></td>
+            <td class="midtd"><span class="topspan">Tags: {{tv.info.tags}}</span></td>
+        </tr>
+        <tr class="vulnTrMid">
+            {% if tv.info.severity == 'info' %} <!-- Accessing nested dictionary -->
+                <td  class="info">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif tv.info.severity == 'low' %} <!-- Accessing nested dictionary -->
+                <td  class="low">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif tv.info.severity == 'medium' %} <!-- Accessing nested dictionary -->
+                <td  class="medium">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif tv.info.severity == 'high' %} <!-- Accessing nested dictionary -->
+                <td  class="high">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif tv.info.severity == 'critical' %} <!-- Accessing nested dictionary -->
+                <td  class="critical">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif tv.info.severity == 'unknown' %} <!-- Accessing nested dictionary -->
+                <td  class="unknown">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+            {% else %}
+                <td  >{{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
             {% endif %}
-            {{vuln.match_bodys}}</br>
-            {{vuln.matchedAt_bodys}}</br>
-            {{tv.info.reference}}</br>
-<hr style="border: 10px solid green;">
+            <td  class="midtd"><span class="topspan">Author: {{tv.info.author}}</span></td>            
+        </tr>
+        <tr class="vulnTrMidMid">
+            <td class="midtd"><span class="topspan">Description: {{tv.info.description}}</span></td>
+        </tr>
+        <tr class="vulnTrMid">
+            <td class="midtd"><span class="topspan">Reference: {{tv.info.reference}}</span></td>
+        </tr>
+
 {% endfor %}
+{% for vuln in Vulns %}
+        <tr class="vulnTrTop">
+            <td class="toptd"><span class="namespan">Name: {{vuln.name}}</span></td>
+            <td class="toptd"><span class="topspan">Date: {{vuln.date}}</span></td>
+        </tr>
+        <tr class="vulnTrMidMid">
+            <td class="midtd"><span class="topspan">Location: {{vuln.location}}</span></td>
+            <td class="midtd"><span class="topspan">Vuln Class: {{vuln.vulnClass}}</span></td>
+        </tr>
+        <tr class="vulnTrMid">
+            {% if vuln.severity == 'info' %} <!-- Accessing nested dictionary -->
+                <td  class="info">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif vuln.severity == 'low' %} <!-- Accessing nested dictionary -->
+                <td  class="low">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif vuln.severity == 'medium' %} <!-- Accessing nested dictionary -->
+                <td  class="medium">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif vuln.severity == 'high' %} <!-- Accessing nested dictionary -->
+                <td  class="high">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif vuln.severity == 'critical' %} <!-- Accessing nested dictionary -->
+                <td  class="critical">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+            {% elif vuln.severity == 'unknown' %} <!-- Accessing nested dictionary -->
+                <td  class="unknown">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+            {% else %}
+                <td  >{{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+            {% endif %}
+            <td  class="midtd"><span class="topspan">Author: {{vuln.author}}</span></td>
+        </tr>
+        <tr class="vulnTrMidMid">
+            <td class="midtd"><span class="topspan">Match Headers: {{vuln.match_headers}}</span></td>
+        </tr>
+        <tr class="vulnTrMid">
+            <td class="midtd"><span class="topspan">Match Bodys: {{vuln.match_bodys}}</span></td>
+        </tr>
+    </tbody>
+{% endfor %}
+</table>
+</div>
 {% endblock %}

@@ -132,4 +132,4 @@ class DomainNameValidation:
                 else:
                     return False
         except Exception as E:
-    
+            print('domainname 1', E)

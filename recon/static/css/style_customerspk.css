@@ -1,25 +1,31 @@
 ﻿/* update_button */
 
+/* update_button */
 
-.VulnTable {
-    width: 100%;
+.VulnContainer {
+    display: flex;
+    justify-content: space-between;
+}
+
+.VulnContainer table {
+    table-layout: fixed;
     border-collapse: collapse;
 }
 
-.VulnTable td, .VulnTable th {
+.VulnContainer td, .VulnContainer th {
     border: 1px solid #ddd;
     padding: 8px;
 }
 
-.VulnTable tr:nth-child(even) {
+.VulnContainer tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 
-.VulnTable tr:hover {
+.VulnContainer tr:hover {
     background-color: #ddd;
 }
 
-.VulnTable th {
+.VulnContainer th {
     padding-top: 12px;
     padding-bottom: 12px;
     text-align: left;
@@ -27,29 +33,7 @@
     color: white;
 }
 
-.vulnTrTop {
-    width: auto;
-    height: 40px;
-}
-
-.vulnTrMid {
-    background-color: #FFFFFF;
-    width: auto;
-    height: 75px;
-}
-
-.vulnTrMidMid{
-    background-color: #DBE5F1;
-    width: auto;
-    height: 40px;
-}
-
-.vulnTr {
-    width: auto;
-    height: auto;
-}
-
-.toptd {
+.VulnContainer .toptd {
     border: 1px solid #ddd;
     font-size: 11.0pt;
     font-family: "Calibri",sans-serif;
@@ -59,78 +43,41 @@
     color: #FFF;
 }
 
-.midtd {
+.VulnContainer .midtd {
     border: 1px solid #ddd;
-    font-size: 14.67 px;
+    font-size: 14.67px;
     font-family: "Calibri",sans-serif;
 }
 
-.vulnTd {
-    border: 1px solid #ddd;
-    font-size: 14.67 px;
-    font-family: "Calibri",sans-serif;
-}
-
-
-
-.topspan {
+.VulnContainer .topspan {
     font-weight: bold;
-    font-size: 14.67 px;
+    font-size: 14.67px;
     font-family: "Calibri",sans-serif;
 }
 
-.midspan {
-    font-weight: bold;
-    font-size: 14.67 px;
-    font-family: "Calibri",sans-serif;
-}
-
-.despspan {
-    font-size: 11.67 px;
-    font-family: "Calibri",sans-serif;
-}
-
-
-.record_severity {
-
-}
-
-.vuln{
-	width: 755px;
-	border-collapse: collapse;
-}
-
-.info, .low, .medium, .high, .critical, .unknown {
-    width: 256px;
+.VulnContainer .info, .VulnContainer .low, .VulnContainer .medium, .VulnContainer .high, .VulnContainer .critical, .VulnContainer .unknown {
     font-weight: bold;
     color: white;
-    font-size: 14.67 px;
+    font-size: 14.67px;
     font-family: "Calibri",sans-serif;
 }
 
-.info {
+.VulnContainer .info {
     background-color: #5bc0de;
 }
 
-.low {
+.VulnContainer .low {
     background-color: #5cb85c;
 }
 
-.medium {
+.VulnContainer .medium {
     background-color: #f0ad4e;
 }
 
-.high {
+.VulnContainer .high, .VulnContainer .critical {
     background-color: #d9534f;
 }
 
-.critical {
-    background-color: #d9534f;
-}
-
-.unknown {
-    background-color: #999;
-}
 
 .namespan {
     color: #FFF;

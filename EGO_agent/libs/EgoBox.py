@@ -9,9 +9,9 @@ import pyasn
 import os
 import whois
 if str(os.name) == 'nt':
-    asndb = pyasn.pyasn(r'E:\tools\0_Secret_lab\EGO_old\ego12\EGO\pyasn\data\ipsn_db_file_name.dat')
+    asndb = pyasn.pyasn(r'.\pyasn\data\ipsn_db_file_name.dat')
 else:
-    asndb = pyasn.pyasn('/mnt/e/tools/0_Secret_lab/EGO_old/ego12/EGO/pyasn/data/ipsn_db_file_name.dat')
+    asndb = pyasn.pyasn('./pyasn/data/ipsn_db_file_name.dat')
 
 from bs4 import BeautifulSoup
 import fuzzywuzzy
@@ -259,7 +259,9 @@ class EgoReconFunc:
             results = record_List_store
             return results
         except Exception as E:
-
+            print(E)
+            print('failed here meow')
+            
     def TLDENUM(fqdn, domainname, SCOPED=None, Customer_key=None, SET=None , WHOIS=None, values=None, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=None):
         headers = {"Content-type": "application/json", "Accept": "application/json"}
         fqdn_domain_set = DomainNameValidation.CREATOR(fqdn)
@@ -355,6 +357,7 @@ class EgoReconFunc:
                                                 headers.update(auth_token_json)
                                                 requ =  requests.patch(update_url, data=recs, headers=headers)
                                             except Exception as E:
+                                                print('failed known tld')
                                         else:
                                             if fqdn in KnownTLD:
                                                 pass
@@ -367,6 +370,7 @@ class EgoReconFunc:
                                                     headers.update(auth_token_json)
                                                     requ =  requests.patch(update_url, data=recs, headers=headers)
                                                 except Exception as E:
+                                                    print(E)
                                             #time.sleep(0.05)
                                             dic = {}
                                             found_known = values['foundAt'].append(domainname)
@@ -413,6 +417,7 @@ class EgoReconFunc:
                                             headers.update(auth_token_json)
                                             requ =  requests.patch(update_url, data=recs, headers=headers)
                                         except Exception as E:
+                                            print(E)
                                     else:
                                         if fqdn in KnownTLD:
                                             pass
@@ -424,6 +429,7 @@ class EgoReconFunc:
                                                 headers.update(auth_token_json)
                                                 requ =  requests.patch(update_url, data=recs, headers=headers)
                                             except Exception as E:
+                                                print(E)
                                         #time.sleep(0.05)
                                         dic = {}
                                         found_known = values['foundAt'].append(domainname)
@@ -466,6 +472,7 @@ class EgoReconFunc:
                                     headers.update(auth_token_json)
                                     requ =  requests.patch(update_url, data=recs, headers=headers)
                                 except Exception as E:
+                                    print(E)
                             time.sleep(0.05)
                             dic = {}
                             found_known = values['foundAt'].append(domainname)
@@ -546,6 +553,7 @@ class EgoCert:
                             stuff = {k:x} 
                             results.update(stuff)
             except Exception as E:
+                print(E)
                 pass
         return results
      
@@ -680,7 +688,7 @@ class ToolBox:
                     else:
                         request = requests.post(url, headers=headers, data=recs, verify=False)
                 except Exception as E:
-
+                    print(E)
             return True
         else:
             try:
@@ -696,7 +704,7 @@ class ToolBox:
                     request = requests.post(url, headers=headers, data=response, verify=False)
                 
             except Exception as E:
-
+                print(E)
             return True
 
     def Selenium(url):
@@ -712,6 +720,7 @@ class ToolBox:
             driver.save_screenshot(f"/mnt/e/tools/0_Secret_lab/EGO_old/ego7/egodev/RecordPictures/{uuid.UUID}.png")
             return (f"/mnt/e/tools/0_Secret_lab/EGO_old/ego7/egodev/RecordPictures/{uuid.UUID}.png")
         except Exception as E:
+            print(E)
             return False
 
     def RandomTime(time=(6,60)):
@@ -984,8 +993,6 @@ class ToolBox:
                             p= domain
 
                             if headers:
-
-
                                 try:
                                     csp = re.headers(' ', csp)
                                 except:
@@ -1014,8 +1021,14 @@ class ToolBox:
                                                         dns_scan= ToolBox.Uploader(domain, SCOPED=SCOPED, Customer_key=Customer_key, SET=SET, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                                                     else:
                                                         dns_scan= ToolBox.Uploader(domain, SCOPED=SCOPED, Customer_key=Customer_key, SET=SET, HostAddress=HostAddress, Port=Port)
+                                                else:
+                                                    pass
+                                        else:
+                                            pass
+                                else:
+                                    pass
                             else:
-
+                                pass
                             if html:
                                 soup = BeautifulSoup(html, 'html.parser')
                                 href = [a.get('href') for a in soup.find_all('a')]    
@@ -1049,8 +1062,12 @@ class ToolBox:
                                                             pass
                                                         else:
                                                             z['path'].append(x.get('path'))
-
+                                                    else:
+                                                        pass
+                                                else:
+                                                    pass
                                         else:
+                                            pass
                                 else:
                                     pass
                             else:
@@ -1104,7 +1121,7 @@ class ToolBox:
             resp = requests.post(url,headers=headers,data=data)
             return resp
         except Exception as E:
-        
+            print(E)
 
     def clean_newlines(data):
         return data.strip('\n')
@@ -1226,7 +1243,7 @@ class ToolBox:
                                             ToolBox.MantisRequester(toscan[0], jsonresponseRecords['id'], SET=SET, Customer_key=Customer_key, SCOPED=SCOPED, path=None, method='GET', HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json,CoolDown_Between_Queries=CoolDown_Between_Queries)
                                             ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'], HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                                         except Exception as E:
-
+                                            print(E)
                                             pass
                                         status = responseRecords.status_code
                                         if status != 201:
@@ -1246,8 +1263,7 @@ class ToolBox:
                                             dns_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
                                             DIC.update(dns_id)
                                             # cerrt
-                                            if CertBool == False:
-                                            else:
+                                            if CertBool != False:
                                                 jsonresponseRecords_id= jsonresponseRecords['id']
                                                 certificate_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
                                                 Certificate_= cert['Certificate']
@@ -1307,42 +1323,36 @@ class ToolBox:
                                                 pass
 
                                             versionscan_bool_before_version = False
-                                            if str(status) != str(201):
-                                            elif "record with this subDomain already exists." in responseRecords:
-                                            else:
-                                                #nmap
-                                                portscan_bool = False
-                                                versionscan_bool_before_version = True
-                                                nmap_scan= EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
-                                                #dns
+                                            #nmap
+                                            portscan_bool = False
+                                            versionscan_bool_before_version = True
+                                            nmap_scan= EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
+                                            #dns
+                                            jsonresponseRecords_id= jsonresponseRecords['id']
+                                            dns_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
+                                            subDomain.update(dns_id)
+                                            portscan_bool_temp = False
+                                            # cerrt
+                                            if CertBool != False:
                                                 jsonresponseRecords_id= jsonresponseRecords['id']
-                                                dns_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
-                                                subDomain.update(dns_id)
-                                    
-
-                                                portscan_bool_temp = False
-                                                # cerrt
-                                                if CertBool == False:
-                                                else:
-                                                    jsonresponseRecords_id= jsonresponseRecords['id']
-                                                    certificate_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
-                                                    Certificate_= cert['Certificate']
+                                                certificate_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
+                                                Certificate_= cert['Certificate']
                             
-                                                    certificate_id.update(Certificate_) 
-                                                    md5_hash = hashlib.md5(json.dumps(certificate_id, sort_keys=True).encode('utf-8')).hexdigest()
-                                                    results = dict.fromkeys(['md5'],md5_hash)
-                                                    certificate_id.update(results)
-                                                    DIC_headers = {}
+                                                certificate_id.update(Certificate_) 
+                                                md5_hash = hashlib.md5(json.dumps(certificate_id, sort_keys=True).encode('utf-8')).hexdigest()
+                                                results = dict.fromkeys(['md5'],md5_hash)
+                                                certificate_id.update(results)
+                                                DIC_headers = {}
 
-                                                    #DIC_headers.update(auth_token_json)
-                                                    DIC_headers.update(headers)
-                                                    recs= json.dumps(certificate_id)
-                                                    certificateurlPost= f"{EgoSettings.HostAddress}:{Port}/api/Certificate/create/"
-                                                    if bool(auth_token_json):
-                                                        DIC_headers.update(auth_token_json)
-                                                    postRecords = requests.post(certificateurlPost, data=(recs), headers=DIC_headers,verify=False)
-                                                    responseRecords = postRecords.json()
-                                                    return True
+                                                #DIC_headers.update(auth_token_json)
+                                                DIC_headers.update(headers)
+                                                recs= json.dumps(certificate_id)
+                                                certificateurlPost= f"{EgoSettings.HostAddress}:{Port}/api/Certificate/create/"
+                                                if bool(auth_token_json):
+                                                    DIC_headers.update(auth_token_json)
+                                                postRecords = requests.post(certificateurlPost, data=(recs), headers=DIC_headers,verify=False)
+                                                responseRecords = postRecords.json()
+                                                return True
                         else:
                             domain_set= DomainNameValidation.CREATOR(a)
                             if domain_set == False:
@@ -1466,8 +1476,7 @@ class ToolBox:
                                                 subDomain.update(dns_id)
                                                 portscan_bool_temp = False
                                                 # cerrt
-                                                if CertBool == False:
-                                                else:
+                                                if CertBool != False:
                                                     jsonresponseRecords_id= jsonresponseRecords['id']
                                                     certificate_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
                                                     Certificate_= cert['Certificate']
@@ -1566,5 +1575,7 @@ class ToolBox:
                             responseRecords = json.loads(postRecords.text)
                             return(f'responseRecords2       {responseRecords}')
         except Exception as E:
+            print('EGOBOX')
+            print('EGOBOX', E)
 
 

@@ -217,7 +217,7 @@ class customer_pk(forms.ModelForm):
 ### MantisData create 
 class MantisDataCreate(forms.ModelForm):
     class Meta:
-        model = Mantis
+        model = PythonMantis
         fields = [
             'vulnCard_id',
             'Elevate_Vuln',

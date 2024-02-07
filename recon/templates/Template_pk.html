@@ -4,21 +4,6 @@
 <head>
     <link href="{% static 'css/StyleSheet1.css' %}" rel="stylesheet">
     <link href="{% static 'css/style_customerspk.css' %}" rel="stylesheet">
-<scirpt>
-    document.querySelectorAll('.records').forEach(function(record) {
-        record.addEventListener('click', function() {
-            var popup = document.querySelector('#popup');
-            popup.innerHTML = this.innerHTML;
-            window.location.hash = 'popup';
-        });
-    });
-
-    document.querySelector('.close').addEventListener('click', function(e) {
-        e.preventDefault();
-        window.location.hash = '';
-    });
-
-    </script>
     </script>
     <!-- Required meta tags -->
     <meta charset="utf-8">
