@@ -29,9 +29,18 @@ EGO also provides a REST API for reconnaissance agents to connect back to. This 
    ```
    sudo apt-get install nmap
    ```
-5. Install nuclei: 
+5. Install nuclei: First we need to install go1.21 [https://go.dev/doc/install](https://royzsec.medium.com/install-go-1-21-0-in-ubuntu-22-04-2-in-5-minutes-468a5330c64e)
 ```
-git clone https://github.com/projectdiscovery/nuclei.git
+sudo apt-get update
+wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+sudo tar -xvf go1.21.0.linux-amd64.tar.gz
+sudo mv go /usr/local
+export GOROOT=/usr/local/go
+export GOPATH=$HOME/go
+export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+source ~/.profile
+
+go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
 ```
 
 All settings and switches for the agents are controlled by the REST API. The agents find the REST API using `/EGO_agent/EgoSettings.py`.
@@ -43,6 +52,24 @@ EgoAgentUser = "ego" EgoAgentPassWord = "password" HostAddress = "http://127.0.0
 To run EgoRecon.py: 
 ```
 python3 EgoRecon.py
+vim /etc/systemd/system/EGORecon.service
+
+[Unit]
+Description=Interactsh
+After=network.target
+
+[Service]
+Type=simple
+User=root
+UMask=007
+ExecStart= python3 manage runserver 0.0.0.0:5000
+Restart=on-failure
+
+# Configures the time to wait before service is stopped forcefully.
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target
 ```
 To run the nuclei python wrapper: 
 ```
