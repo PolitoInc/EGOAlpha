@@ -88,10 +88,6 @@ def validIPNetWorks(IP: str) -> str:
     except ValueError:
         return False
 
-
-
-
-
 def brain(data):
     if data != 'None':
         wordsList = re.split(r'\W', data)

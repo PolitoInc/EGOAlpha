@@ -11,7 +11,7 @@ import whois
 if str(os.name) == 'nt':
     asndb = pyasn.pyasn(r'.\pyasn\data\ipsn_db_file_name.dat')
 else:
-    asndb = pyasn.pyasn('./pyasn/data/ipsn_db_file_name.dat')
+    asndb = pyasn.pyasn('/home/ego/EGO_agent/pyasn/data/ipsn_db_file_name.dat')
 
 from bs4 import BeautifulSoup
 import fuzzywuzzy

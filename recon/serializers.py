@@ -6,20 +6,6 @@ from recon.models import *
 from recon.forms import *
 from collections import Counter, OrderedDict
 
-
-class EGOAgentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EGOAgent
-        fields = [
-            'id', 
-            'hostLocation', 
-            'lastConnect', 
-            'callBackTime', 
-            'alive', 
-            'scanning', 
-            'bearer_token'
-            ]
-
 #########################
 ####    Customer serializers
 #######################   
@@ -316,19 +302,12 @@ class WordListGroupSerializer(serializers.ModelSerializer):
 #########################
 ####    Control serializers
 #######################
-
-class GnawControlSerializer(serializers.ModelSerializer):
-    egoAgent = EGOAgentSerializer()
-    class Meta:
-        model = GnawControl
-        fields = '__all__'
-
 class EgoControlSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = EgoControl
         fields = (
             'id',
-            #'agent',
             'OutOfScope',
             'ScanProjectByID',
             'ScanGroupingProject',
@@ -355,6 +334,37 @@ class EgoControlSerializer(serializers.ModelSerializer):
             'Gnaw_Completed',
             'failed',
             )
+
+class GnawControlSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GnawControl
+        fields = (
+            'id',
+            'egoAgentID',
+            'OutOfScope',
+            'NucleiScan',
+            'Ipv_Scan',
+            'LoopCustomersBool',
+            'ScanProjectByID',
+            'ScanGroupingProject',
+            'ScanProjectByName',
+            'Customer_chunk_size',
+            'Record_chunk_size',
+            'Global_Nuclei_CoolDown',
+            'Global_Nuclei_RateLimit',
+            'Port',
+            'HostAddress',
+            'severity',
+            'Gnaw_Completed',
+            'failed'
+            )
+       
+class EGOAgentSerializer(serializers.ModelSerializer):
+    EGOAgent = GnawControlSerializer()
+    class Meta:
+        model = EGOAgent
+        fields = '__all__'
+        
 
 class MantisControlSerializer(serializers.ModelSerializer):
     class Meta:

@@ -62,7 +62,7 @@ class SignUpView(generic.CreateView):
     template_name = './auth/signup.html'
     
     def form_valid(self, form):
-        signup_key = form.cleaned_data.get('meow')
+        signup_key = form.cleaned_data.get('changeme')
         if signup_key == 'string':  # replace 'string' with your actual key
             response = super().form_valid(form)
             # Authenticate the user
@@ -420,6 +420,12 @@ def GnawControlBoards(request):
     return TemplateResponse(request, 'GnawControl/gnawControlBoards.html', {"gnaw": gnaw, "customers": customers, "create":create, "form": form})
 
 @login_required
+def GnawControlBoardDelete(request, pk):
+    Control = get_object_or_404(GnawControl, pk=pk)
+    Control.delete() 
+    return HttpResponseRedirect('/GnawControlBoard/')
+
+@login_required
 def GnawControlBoardsCreate(request):
     if request.method == 'GET':
         form = create_gnawcontrol()
@@ -504,8 +510,7 @@ def VulnBoards(request):
     count = len(querysetFoundVuln) + len(querysetTemplate)
 
     if request.method == 'GET':
-        return TemplateResponse(request, "Vulns/VulnBoards.html", {"Vulns": querysetFoundVuln, "Template": querysetTemplate, "count": count})
-
+        return TemplateResponse(request, "Vulns/VulnBoards.html", {"Vulns": querysetFoundVuln[::-1], "Template": querysetTemplate[::-1], "count": count})
 
 # create mantis controls
 @login_required
@@ -953,11 +958,11 @@ class BaseView:
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-class GnawControlCreateViewSet(BaseView, generics.ListCreateAPIView):
+class GnawControlCreateViewSet(BaseView,generics.ListCreateAPIView):
     serializer_class = GnawControlSerializer
     queryset = GnawControl.objects.all()
 
-class GnawControlViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
+class GnawControlViewSet(BaseView,generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GnawControlSerializer
     queryset = GnawControl.objects.all()
 
@@ -1374,10 +1379,10 @@ class whoisRetrieveViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = Whois_serializers
     queryset = whois.objects.all()
 
-class EGOAgentListCreateView(generics.ListCreateAPIView):
+class EGOAgentListCreateView(BaseView,generics.ListCreateAPIView):
     queryset = EGOAgent.objects.all()
     serializer_class = EGOAgentSerializer
 
-class EGOAgentRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class EGOAgentRetrieveUpdateDestroyView(BaseView,generics.RetrieveUpdateDestroyAPIView):
     queryset = EGOAgent.objects.all()
     serializer_class = EGOAgentSerializer

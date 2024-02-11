@@ -29,6 +29,7 @@ urlpatterns = [
     path('GnawControlBoard/', GnawControlBoards, name='GnawControlBoards'),
     path('GnawControlBoard/create', GnawControlBoardsCreate, name='GnawControlBoardsCreate'),
     path('GnawControlBoard/<pk>', GnawControlBoardsPK, name='GnawControlBoardsPK'),
+    path('GnawControlBoard/delete/<pk>', GnawControlBoardDelete, name='GnawControlBoardDelete'),
     path('VulnBoards/', VulnBoards, name='VulnBoards'),
     path('VulnBoards/search/', VulnBoards, name='VulnBoards'),
     path('VulnsBoardChart/', VulnsBoardChart, name='VulnsBoardChart'),

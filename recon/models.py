@@ -219,7 +219,7 @@ class EGOAgent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=256, null=True, blank=True)
     hostLocation = models.CharField(max_length=256, blank=True)
-    lastConnect = models.DateField()
+    lastConnect = models.DateField(auto_now_add=True)
     callBackTime = models.IntegerField(default='30')
     alive = models.BooleanField(default='False')
     scanning = models.BooleanField(default='False')
@@ -227,9 +227,9 @@ class EGOAgent(models.Model):
 
 class GnawControl(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    egoAgentID = models.ForeignKey(EGOAgent, on_delete=models.CASCADE, related_name='EGOAgent', null=True, blank=True)
     NucleiScan = models.BooleanField(default='True')
     Ipv_Scan = models.BooleanField(default='False')
-    egoAgent = models.ForeignKey(EGOAgent, on_delete=models.CASCADE, related_name='egoAgent', null=True, blank=True)
     LoopCustomersBool = models.BooleanField(default='False')
 ## fix in next updatee to support list of strings to ignore
     OutOfScope = models.CharField(max_length = 75, blank=True, null=True)
@@ -247,6 +247,7 @@ class GnawControl(BaseModel):
     failed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">An exception occured.</fieldset>')
     scan_objects = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
     SubdomainsSeen = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
+
 
 class EgoControl(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

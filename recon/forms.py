@@ -32,7 +32,7 @@ class CustomersForm(forms.ModelForm):
             'reconOnly': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
             'passiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
             'agressiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control ', 'style': 'width:500px;'}),
             'OutOfScopeString': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:500px;'}),
             'urlScope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
             'outofscope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
@@ -158,7 +158,7 @@ class create_gnawcontrol(forms.ModelForm):
     class Meta:
         model = GnawControl
         fields = [
-            'NucleiScan', 'Ipv_Scan', 'egoAgent', 'LoopCustomersBool', 'OutOfScope', 'ScanProjectByID', 
+            'NucleiScan', 'Ipv_Scan', 'egoAgentID', 'LoopCustomersBool', 'OutOfScope', 'ScanProjectByID', 
             'ScanGroupingProject', 'ScanProjectByName', 'Customer_chunk_size', 'Record_chunk_size', 
             'Global_Nuclei_CoolDown', 'Global_Nuclei_RateLimit', 'Port', 'HostAddress', 'severity', 
             'Gnaw_Completed', 'failed', 'scan_objects', 'SubdomainsSeen'
@@ -166,7 +166,7 @@ class create_gnawcontrol(forms.ModelForm):
         widgets = {
             'NucleiScan': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'Ipv_Scan': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'egoAgent': forms.Select(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
+            'egoAgentID': forms.Select(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
             'LoopCustomersBool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'OutOfScope': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 450px;'}),
             'ScanProjectByID': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
@@ -184,8 +184,17 @@ class create_gnawcontrol(forms.ModelForm):
             'scan_objects': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
             'SubdomainsSeen': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
         }
+    def __init__(self, *args, **kwargs):
+        super(create_gnawcontrol, self).__init__(*args, **kwargs)
 
-
+        # Set default values and help text
+        self.fields['NucleiScan'].initial = True
+        self.fields['Ipv_Scan'].initial = False
+        self.fields['Ipv_Scan'].initial = False
+        self.fields['LoopCustomersBool'].initial = False       
+        self.fields['Gnaw_Completed'].initial = False
+        self.fields['failed'].initial = False
+        
 class customer_pk(forms.ModelForm):
     class Meta:
         model = Customers

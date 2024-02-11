@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block title %}
-            <h1>Nuclei ControlBoard</h1>
+Nuclei ControlBoard
 {% endblock %}
 
 
@@ -21,7 +21,12 @@
                 {% for gn in gnaw %}
                 <tr>
                     <td class="table_id_customer">
-
+                     {{gn.id}}
+                            <form action="/GnawControlBoard/delete/{{gn.id}}" method="GET">
+                                {% csrf_token %}
+                                <input type="hidden" name="_method" value="delete">
+                                <input type="submit" value="Delete" class="btn btn-danger">
+                            </form>
                         <a href="/GnawControlBoard/{{gn.id}}">Gnaw Control here</a>
                     </td>
                     <td class="table_Project_Group_Name">
@@ -53,7 +58,7 @@
                     {% for customer in customers %}
                     <tr>
                         <td class="table_id_customer">
-                            {{customer.id}}
+                        {{customer.id}}
                         </td>
                         <td class="table_Project_Group_Name">
                             {{customer.groupingProject}}

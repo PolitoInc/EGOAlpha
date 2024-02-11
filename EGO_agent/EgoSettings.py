@@ -1,14 +1,9 @@
-#EgoAgentUser = "EGO"
+egoAgent = 'uuid'
 EgoAgentUser = "ego"
-#EgoAgentPassWord = "password)"
-EgoAgentPassWord = "password"
-
-CensysSecretID = ""
-CensysSecretKey = ""
-
-#HostAddress = "https://example.com"
-HostAddress = "http://127.0.0.1"
+EgoAgentPassWord = "replaceme"
+HostAddress = "http://example.com"
 Port = "5000"
 api_accessKey = ""
-
-egoAgent = ""
+agentName = "Home"
+dump = "/home/ego/EGO_agent"
+nuclei = "/usr/local/bin/nuclei"

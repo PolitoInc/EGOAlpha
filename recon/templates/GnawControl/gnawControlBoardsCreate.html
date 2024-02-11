@@ -13,11 +13,10 @@
                 {% csrf_token %}
                 {% for field in form %}
                 <div class="form-group">
-            <label for="{{ field.id_for_label }}" class="egolabel">
-                {{ field.label }}
-            </label>
-            {{ field }}
-
+                    <label for="{{ field.id_for_label }}" class="egolabel">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
                     {% if field.help_text %}
                         <span class="form">
                         {{ field.help_text|safe }}
@@ -33,6 +32,4 @@
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>
         </div>
-
-
 {% endblock %}
