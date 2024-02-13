@@ -79,3 +79,9 @@ To run the EGO custom web vulnerability scanner, mantis:
 ```
 python3 mantis.py
 ```
+
+
+```
+pip3 install -r requirements.txt
+pip3 install "censys==2.0.7; python_version > '3.8'" "censys==0.0.8; python_version <= '3.8'"
+```
