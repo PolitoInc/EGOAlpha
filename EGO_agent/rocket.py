@@ -139,25 +139,23 @@ def Ego(username, password):
     try:
         cpuCount = os.cpu_count()
         print(f'cpu {cpuCount}')
-        print('ego')
-        urlLogin = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/login"
-        print(urlLogin)
-        creds = {"username": EgoSettings.EgoAgentUser, "password": EgoSettings.EgoAgentPassWord}
-        print(creds)
-        headers = {"Content-type": "application/json", "Accept": "application/json"}
-        req = requests.post(urlLogin,data=json.dumps(creds),headers=headers, verify=False, timeout=60)
-        rjson_auth = req.json()
-        print(rjson_auth)
-        if rjson_auth:
-            print('*.here')
-            auth_token_json = {"Authorization": f"Token {rjson_auth['token']}"}
-            headers.update(auth_token_json)
+        print('ego', EgoSettings.api_accessKey)
+        if EgoSettings.api_accessKey:
+            auth_token_json = {"Authorization": f"Bearer {EgoSettings.api_accessKey}"}
+        else:
+            return 
         DOMAINseen = []
         Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/EgoControls/"
-
+        headers = {"Content-type": "application/json", "Accept": "application/json"}
+        print(auth_token_json)
+        headers.update(auth_token_json)
         request = requests.get(Url_EgoControls, headers=auth_token_json, verify=False, timeout=60)
+        print(request.status_code)
         responses = request.json()
+        print(responses)
         for response in responses:
+            id_EgoControl = response['id']
+            print(id_EgoControl)
             try:
                 COMPLETED = bool(response['Completed'])
                 print(COMPLETED)
@@ -167,7 +165,7 @@ def Ego(username, password):
                     pass
                 else:
                     SET = response
-                    id_EgoControl = response['id']
+                    
                     customerId= response['ScanProjectByID']
                     scanPRojectgroup= response['ScanGroupingProject']
                     scanProjectName = response['ScanProjectByName']
@@ -375,9 +373,13 @@ def Ego(username, password):
                                                                 elif OutOfScopeString not in domain_set['domainname']:
                                                                     pass
                                                                 else:
-                                                
-                                                                    scan_scoped= dask.delayed(EgoReconFunc.scan_scope)(domain_set['domainname'], Customer_key=Customer_key, SET=SET, SCOPED= SCOPED_set_domain, HostAddress=HostAddress, Port=Port, Worddsresults=Worddsresults)
-                                                                    out.append(scan_scoped)
+                                                                    if auth_token_json:
+                                                                        scan_scoped= dask.delayed(EgoReconFunc.scan_scope)(domain_set['domainname'], Customer_key=Customer_key, SET=SET, SCOPED= SCOPED_set_domain, HostAddress=HostAddress, Port=Port, Worddsresults=Worddsresults, auth_token_json=auth_token_json)
+                                                                        out.append(scan_scoped)
+
+                                                                    else:
+                                                                        scan_scoped= dask.delayed(EgoReconFunc.scan_scope)(domain_set['domainname'], Customer_key=Customer_key, SET=SET, SCOPED= SCOPED_set_domain, HostAddress=HostAddress, Port=Port, Worddsresults=Worddsresults)
+                                                                        out.append(scan_scoped)            
                                                     escape_outmeow= dask.compute(*out)
                                             
                                                 elif Scan_IPV_Scope_bool == True:

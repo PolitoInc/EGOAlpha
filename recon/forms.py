@@ -13,7 +13,10 @@ from recon.models import *
 from recon.forms import *
 from recon.serializers import *
 
-
+class EGOAgentForm(forms.ModelForm):
+    class Meta:
+        model = EGOAgent
+        fields = ['name', 'hostLocation', 'callBackTime', 'alive', 'scanning']
 
 class CustomersForm(forms.ModelForm):
     class Meta:

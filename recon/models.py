@@ -8,14 +8,14 @@ import uuid
 from django.contrib.postgres.fields import JSONField
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework.authtoken.models import Token
-from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.utils.translation import gettext as _
 from rest_framework.authtoken.models import Token
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
-
+import binascii
+import os
 BaseModel = models.Model
 
     
@@ -150,33 +150,80 @@ class GEOCODES(BaseModel):
 ##############################
 # NMap NIST 
 ##############################
-class CPEID(BaseModel):
-    cpeId = models.CharField(max_length=175, primary_key=True)
-    CPE = models.CharField(max_length=100)
-    service = models.CharField(max_length=75)
-    version = models.CharField(max_length=128)
-
-class csv_version(BaseModel):
-    vectorString = models.CharField(primary_key=True, max_length=50)
-    version = models.CharField(max_length=7)
-    accessVector = models.CharField(max_length=50)
-    accessComplexity = models.CharField(max_length=9)
-    authentication = models.CharField(max_length=256)
-    confidentialityImpact = models.CharField(max_length=10)
-    integrityImpact = models.CharField(max_length=10)
-    availabilityImpact = models.CharField(max_length=10)
-    baseScore = models.CharField(max_length=5)
-    baseSeverity = models.CharField(max_length=9)
-
-class nist_description(BaseModel):
-    nist_record_id = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='Nist_records', blank=True, null=True)
+#dont need remove
+class Description(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    CPEServiceID = models.ForeignKey(CPEID, on_delete=models.CASCADE, related_name='CPEService')
-    csv_version_id = models.ForeignKey(csv_version, on_delete=models.CASCADE, related_name='CsvVersion')
-    CPE = models.CharField(max_length=100)
-    service = models.CharField(max_length=75)
-    descriptions = models.TextField(unique=True)
-    references = ArrayField(models.CharField(max_length=2048), blank=True)
+    lang = models.CharField(max_length=2, default='null')
+    value = models.TextField(default='null')
+
+class CvssData(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    version = models.CharField(max_length=10, default='null')
+    vectorString = models.CharField(max_length=50, default='null')
+    accessVector = models.CharField(max_length=50, default='null')
+    accessComplexity = models.CharField(max_length=50, default='null')
+    authentication = models.CharField(max_length=50, default='null')
+    confidentialityImpact = models.CharField(max_length=50, default='null')
+    integrityImpact = models.CharField(max_length=50, default='null')
+    availabilityImpact = models.CharField(max_length=50, default='null')
+    baseScore = models.FloatField(default=None)
+    baseSeverity = models.CharField(max_length=50, default='null')
+    exploitabilityScore = models.FloatField(default=None)
+    impactScore = models.FloatField(default=None)
+    acInsufInfo = models.BooleanField(default=None)
+    obtainAllPrivilege = models.BooleanField(default=None)
+    obtainUserPrivilege = models.BooleanField(default=None)
+    obtainOtherPrivilege = models.BooleanField(default=None)
+    userInteractionRequired = models.BooleanField(default=None)
+
+class CvssMetricV2(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    source = models.CharField(max_length=50, default='null')
+    type = models.CharField(max_length=50, default='null')
+    cvssData = models.OneToOneField(CvssData, on_delete=models.CASCADE, default=None)
+
+class Weakness(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    source = models.CharField(max_length=50, default='null')
+    type = models.CharField(max_length=50, default='null')
+    description = models.OneToOneField(Description, on_delete=models.CASCADE)
+
+class CpeMatch(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    vulnerable = models.BooleanField(default=None)
+    criteria = models.CharField(max_length=256, default='null')
+    matchCriteriaId = models.CharField(max_length=50, default='null')
+
+class Node(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    operator = models.CharField(max_length=10, default='null')
+    negate = models.BooleanField(default=None)
+    cpeMatch = models.OneToOneField(CpeMatch, on_delete=models.CASCADE, default=None, related_name='cpeMatch')
+
+class Configuration(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    operator = models.CharField(max_length=10)
+    nodes = models.OneToOneField(Node, on_delete=models.CASCADE)
+
+class Reference(models.Model):
+    url = models.URLField(default='null')
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    source = models.CharField(max_length=50, default='null')
+    tags = models.JSONField(default=dict)
+
+class Vulnerability(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recVuln = models.ForeignKey(Record, on_delete=models.CASCADE, related_name='nist_record_id', blank=True, null=True)
+    published = models.DateTimeField(auto_now_add=True)
+    lastModified = models.DateTimeField(auto_now_add=True)
+    sourceIdentifier = models.CharField(max_length=50, default="gov.nist.com")
+    vulnStatus = models.CharField(max_length=50, default="Not Analyzed")
+    descriptions = models.ManyToManyField(Description)
+    metrics = models.OneToOneField(CvssMetricV2, on_delete=models.CASCADE)
+    weaknesses = models.ManyToManyField(Weakness)
+    configurations = models.ManyToManyField(Configuration)
+    references = models.ManyToManyField(Reference)
+
 
 class ThreatModeling(BaseModel): 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -224,6 +271,17 @@ class EGOAgent(models.Model):
     alive = models.BooleanField(default='False')
     scanning = models.BooleanField(default='False')
     bearer_token = models.CharField(max_length=500, blank=True)
+    @property
+    def is_authenticated(self):
+        # return True if the agent is authenticated, False otherwise
+        return True  # or some condition based on your authentication logic
+    
+@receiver(pre_save, sender=EGOAgent)
+def create_bearer_token(sender, instance, **kwargs):
+    if not instance.bearer_token:
+        instance.bearer_token = binascii.hexlify(os.urandom(20)).decode()
+
+
 
 class GnawControl(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

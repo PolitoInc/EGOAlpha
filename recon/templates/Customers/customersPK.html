@@ -14,7 +14,10 @@
     <div id="popup-content"></div>
 </div>
 <div class="CustomerRecords">
-
+<form method="post" action="{% url 'NistView' Customer.id %}">
+    {% csrf_token %}
+    <button type="submit">Parse</button>
+</form>
     <div class="left">
     <!-- hidden until button clicked on display PK_Create -->
         <div class="PK_Create" id="pk-create-content">

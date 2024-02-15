@@ -21,11 +21,15 @@ urlpatterns = [
     path('Customers/Create',CustomersCreate, name='CustomersCreate'),
     path('Customers/<pk>/', CustomerPk, name='CustomerPk'),
     path('Customers/<pk>/delete', CustomersDelete, name='CustomersDelete'),
+    path('Customers/<pk>/NistView', NistView.as_view(), name='NistView'),
+    path('Customers/records/delete/<pk>', CustomerPkDelete, name='CustomerPkDelete'), 
     path('Record/<pk>/delete', RecordDelete, name='RecordDelete'),
     path('EgoControlBoard/', EgoControlBoard, name='EgoControlBoard'),
     path('EgoControlBoard/<pk>/', EgoControlBoardpk, name='EgoControlBoardpk'),
     path('EgoControlBoard/<uuid:pk>/delete/', EgoControlBoardDelete, name='EgoControlBoardDelete'),
     path('EgoControlBoard/create', EgoControlCreate, name='EgoControlCreate'),
+    path('EgoControlBoard/agent', create_ego_agent, name='EgoControlAgent'),
+    path('EgoControlBoard/agent/delete', delete_ego_agent, name='DelEgoControlAgent'),
     path('GnawControlBoard/', GnawControlBoards, name='GnawControlBoards'),
     path('GnawControlBoard/create', GnawControlBoardsCreate, name='GnawControlBoardsCreate'),
     path('GnawControlBoard/<pk>', GnawControlBoardsPK, name='GnawControlBoardsPK'),
@@ -47,9 +51,9 @@ urlpatterns = [
     path('WordList/create', WordClassCreate, name='WordClassCreate'),
     path('VulnBoard/submited/<pk>', VulnSubmitted, name='VulnSubmitted'),
     path('api/login', LoginApiView.as_view()),
-    path('api/csv_version/', csv_versionListViewSet.as_view()),
-    path('api/csv_version/<pk>/', csv_versionViewSet.as_view()),
-    path('api/csv_version/create/', csv_versionCreateViewSet.as_view()),
+    path('api/cvssMetricV2/', cvssMetricV2ListViewSet.as_view()),
+    path('api/cvssMetricV2/<pk>/', cvssMetricV2ViewSet.as_view()),
+    path('api/cvssMetricV2/create/', cvssMetricV2CreateViewSet.as_view()),
     path('api/GnawControl/', GnawControlCreateViewSet.as_view()),
     path('api/GnawControl/<pk>', GnawControlViewSet.as_view()),
     path('api/EgoControls/', EgoControlListViewSet.as_view()),
@@ -118,7 +122,8 @@ urlpatterns = [
     path('api/whois/', whoisListViewSet.as_view()),
     path('api/whois/<pk>', whoisRetrieveViewSet.as_view()),
     path('api/EGOAgent/', EGOAgentListCreateView.as_view(), name='EGOAgent'),
-    path('api/EGOAgent/<pk>/', EGOAgentRetrieveUpdateDestroyView.as_view(), name='EGOAgent'),
+    path('api/EGOAgent/<pk>/', EGOAgentRetrieveUpdateDestroyView.as_view(), name='EGOAgentpk'),
+ 
     ]
 
 

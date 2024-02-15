@@ -3,6 +3,7 @@
 /* update_button */
 
 .VulnContainer {
+    width:750px;
     display: flex;
     justify-content: space-between;
 }
@@ -372,4 +373,13 @@
 
 .no-padding {
     padding: 0;
+}
+
+.blur-text {
+    color: transparent;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5); /* Increased blur effect */
+}
+.blur-text:hover {
+    color: black;
+    text-shadow: none;
 }

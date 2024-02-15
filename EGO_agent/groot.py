@@ -658,8 +658,7 @@ def register_and_update_agent(auth_token_json=None):
 def gnaw():
     cpuCount = round(os.cpu_count())
     print(f'cpu {cpuCount}')
-    auth_token_json = get_auth_token()
-
+    auth_token_json = {"Authorization": f"Bearer {EgoSettings.api_accessKey}"}
     responseEgo, responseAgent = register_and_update_agent(auth_token_json)
     print('responseEgo',responseEgo)
     print('responseAgent',responseAgent)

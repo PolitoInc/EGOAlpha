@@ -8,17 +8,13 @@ import random
 import pyasn
 import os
 import whois
-if str(os.name) == 'nt':
-    asndb = pyasn.pyasn(r'.\pyasn\data\ipsn_db_file_name.dat')
-else:
-    asndb = pyasn.pyasn('/home/ego/EGO_agent/pyasn/data/ipsn_db_file_name.dat')
 
 from bs4 import BeautifulSoup
 import fuzzywuzzy
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 # customer imports
-import EgoSettings
+
 from .EgoDomainName import*
 from .EgoNetWork import *
 from .EgoDomainSearch import *
@@ -34,8 +30,13 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
-
+import EgoSettings
 seen = []
+print('{EgoSettings.dump}', f'{EgoSettings.dump}/lib/pyasn/data/ipsn_db_file_name.dat')
+if str(os.name) == 'nt':
+    asndb = pyasn.pyasn(r'.\pyasn\data\ipsn_db_file_name.dat')
+else:
+    asndb = pyasn.pyasn(f'{EgoSettings.dump}/libs/pyasn/data/ipsn_db_file_name.dat')
 
 class EgoReconFunc:
     def scan_scope(domain, 
@@ -80,7 +81,7 @@ class EgoReconFunc:
                 domains= domain.get('Ipv')
                 record_List = []
                 for domain in domains:
-                    if validIPAddress(domain) == True:
+                    if Ego_IP.validIPAddress(domain) == True:
                         a= domain
                         if type(a) is str:
                             if auth_token_json:
@@ -1108,7 +1109,7 @@ class ToolBox:
                 recs = json.dumps(DIC)
                 urls = f"{EgoSettings.HostAddress}:{Port}/api/RequestMetaData/create/"
                 headers = {"Content-type": "application/json", "Accept": "application/json"}
-
+                headers.update(auth_token_json)
                 request = requests.post(urls, data=recs, headers=headers, verify=False)
                 return(out)
 
@@ -1254,7 +1255,7 @@ class ToolBox:
                                             #nmap
                                             portscan_bool = False
                                             versionscan_bool_before_version = True
-                                            nmap_scan= EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
+                                            nmap_scan=  EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
                                             #dns
                                             jsonresponseRecords_id= jsonresponseRecords['id']
 
@@ -1279,6 +1280,10 @@ class ToolBox:
                                                 certificateurlPost= f"{EgoSettings.HostAddress}:{Port}/api/Certificate/create/"
                                                 if bool(auth_token_json):
                                                     DIC_headers.update(auth_token_json)
+                                                print('DIC_headersDIC_headersDIC_headersDIC_headers',DIC_headers)
+                                                print('DIC_headersDIC_headersDIC_headersDIC_headers',DIC_headers)
+                                                print('DIC_headersDIC_headersDIC_headersDIC_headers',DIC_headers)
+                                                print('DIC_headersDIC_headersDIC_headersDIC_headers',DIC_headers)
                                                 postRecords = requests.post(certificateurlPost, data=(recs), headers=DIC_headers,verify=False)
                                                 responseRecords = json.loads(postRecords.text)
                                                 return True
@@ -1358,17 +1363,12 @@ class ToolBox:
                             if domain_set == False:
                                 pass
                             else:
-
-
-
-
                                 domainname= domain_set['domainname']
                                 domainname_dict= dict.fromkeys(['domainname'], domainname)
                                 DIC.update(domainname_dict)
                                 FullDomainName= domain_set['fulldomain']  
                                 subDomain= dict.fromkeys(['subDomain'], FullDomainName) 
                                 DIC.update(subDomain)
-                                
                                 HostName= Ego_HostValidation.HostNameBool(FullDomainName)
                                 DIC.update(HostName)
                                 aliveBool= HostName['alive']
@@ -1376,14 +1376,11 @@ class ToolBox:
                                     md5_hash = hashlib.md5(json.dumps(DIC, sort_keys=True).encode('utf-8')).hexdigest()
                                     record_id= dict.fromkeys(['customer_id'], Customer_key['Customer_id'])
                                     md5_dicft = dict.fromkeys(['md5'],md5_hash)
-
                                     DIC.update(md5_dicft)
                                     DIC_headers = {}
                                     #DIC_headers.update(auth_token_json)
                                     DIC_headers.update(headers)
                                     DIC.update(record_id)
-
-                                
                                     recs= json.dumps(DIC)
                                     urlPost = f"{EgoSettings.HostAddress}:{Port}/api/records/create/"    
                                     if bool(auth_token_json):
@@ -1393,19 +1390,14 @@ class ToolBox:
 
                                     pass
                                 else:
-
                                     portscan_bool = True
                                     versionscan_bool_before_version = False
                                     nmap_scan= EgoNmap.NmapScan(DIC, portscan_bool, versionscan_bool_before_version, auth_token_json=auth_token_json )
-
-                                    
-
                                     if nmap_scan is None:
                                         pass
                                     else:
 
                                         DIC.update(nmap_scan)
-            
                                         cert= EgoCert.certRipper(DIC, SET=SET, portscan_bool=portscan_bool, versionscan_bool=versionscan_bool, CoolDown_Between_Queries=CoolDown_Between_Queries ,Customer_key=Customer_key, SCOPED=SCOPED, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                                         if cert == 'None' or type(cert) is None:
                                             pass
@@ -1542,7 +1534,7 @@ class ToolBox:
                         try:
 
                             ToolBox.MantisRequester(FullDomainName, jsonresponseRecords['id'], SET=SET, Customer_key=Customer_key, SCOPED=SCOPED, path=None, method='GET', HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json,CoolDown_Between_Queries=CoolDown_Between_Queries)
-                            dnsquery= EgoDns.Dns_Resolver(jsonresponseRecord, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+                            dnsquery= EgoDns.Dns_Resolver(jsonresponseRecords, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                             ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'],  HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                             portscan_bool = False
                             versionscan_bool_before_version = True

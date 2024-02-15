@@ -1,5 +1,6 @@
+from django import VERSION
 from django.contrib.auth.decorators import login_required, permission_required
-
+from django.conf import settings
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 import requests, json, re, time
@@ -15,7 +16,7 @@ import statistics
 import tldextract
 from statistics import mode
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-
+import time
 from collections import deque
 import codecs
 from django.views import generic
@@ -27,6 +28,7 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_200_OK
 )
+from rest_framework.exceptions import AuthenticationFailed
 from django.urls import reverse_lazy
 from django.core.files import File
 from rest_framework.authtoken.models import Token
@@ -40,6 +42,7 @@ from datetime import datetime, timedelta
 from recon.models import * 
 from recon.forms import *
 from recon.serializers import *
+from recon.authentication import *
 from django.template.response import TemplateResponse;
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth import login, authenticate
@@ -62,7 +65,7 @@ class SignUpView(generic.CreateView):
     template_name = './auth/signup.html'
     
     def form_valid(self, form):
-        signup_key = form.cleaned_data.get('changeme')
+        signup_key = form.cleaned_data.get('LLoIIl3YZPCMlWKAfDc13bc')
         if signup_key == 'string':  # replace 'string' with your actual key
             response = super().form_valid(form)
             # Authenticate the user
@@ -93,18 +96,26 @@ class LoginView(generic.FormView):
             return super().form_valid(form)
         else:
             return HttpResponseRedirect(reverse('login_fail'))  # Redirect to 'login_fail' if login failed
-
+        
 class LoginApiView(APIView):
     def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-        user = authenticate(username=username, password=password)
-        if user:
-            # Generate or retrieve a token for the authenticated user
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_200_OK)
+        auth_header = request.META.get('HTTP_AUTHORIZATION')
+        if auth_header and auth_header.startswith('Bearer '):
+            bearer_token = auth_header
         else:
-            return Response({"error": "Invalid username/password"}, status=status.HTTP_400_BAD_REQUEST)
+            bearer_token = None
+
+        if bearer_token:
+            try:
+                token = bearer_token[7:]  # Extract the token part
+                ego_agent = EGOAgent.objects.get(bearer_token=token)
+                return Response({"Authorization": f"{bearer_token}", "message": "Success"}, status=status.HTTP_200_OK)
+            except EGOAgent.DoesNotExist:
+                return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "No token provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 def logout_view(request):
     logout(request)
@@ -214,12 +225,7 @@ def VulnSubmitted(request, pk):
     
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
-
-
 # create a customer record    
-
-
-
 # Get country information from 2 character country code EN US FR GR
 @login_required
 def get_country_location(country_code):
@@ -262,6 +268,13 @@ def CustomersCreate(request, format=None):
         form = CustomersForm()
     return TemplateResponse(request, 'Customers/customerCreate.html', {'form': form})
 
+@login_required
+def CustomerPkDelete(request, pk, format=None):
+    if request.method == 'GET':
+        customer = get_object_or_404(Customers, pk=pk)
+        customer.customerrecords.all().delete()  # Delete all related 'customerrecords'
+        return HttpResponseRedirect(f'/Customers/{pk}')
+    
 #retrieve customer record
 @login_required
 def CustomerPk(request, pk, format=None):
@@ -325,7 +338,7 @@ def CustomerPk(request, pk, format=None):
             return HttpResponse("Form is not valid", status=400)
     else:
         form = CustomersForm(instance=customer)
-    return render(request, 'form_template.html', {'form': form})
+    return render(request, 'Customers/customersPK.html', {'form': form})
 
 @login_required
 
@@ -501,16 +514,18 @@ def VulnBoards(request):
     query = request.GET.get("q")
     print(query)
     if query:
-        querysetTemplate = Template.objects.filter(name__icontains=query)
+        querysetTemplate = Template.objects.filter(info__name__icontains=query)
         querysetFoundVuln = FoundVuln.objects.filter(name__icontains=query)
     else:
         querysetTemplate = Template.objects.all()
         querysetFoundVuln = FoundVuln.objects.all()
 
     count = len(querysetFoundVuln) + len(querysetTemplate)
-
+   
+    template_info_name = set([ (obj.info['name'], obj.info['severity']) for obj in querysetTemplate])
+    found_vuln_info_name = set([ (obj.name, obj.severity)  for obj in querysetFoundVuln])
     if request.method == 'GET':
-        return TemplateResponse(request, "Vulns/VulnBoards.html", {"Vulns": querysetFoundVuln[::-1], "Template": querysetTemplate[::-1], "count": count})
+        return TemplateResponse(request, "Vulns/VulnBoards.html", {"Vulns": querysetFoundVuln[::-1], "Template": querysetTemplate[::-1], "template_info_name": template_info_name, "found_vuln_info_name": found_vuln_info_name, "count": count})
 
 # create mantis controls
 @login_required
@@ -948,6 +963,93 @@ def TotalVulnApp(request, pk):
     else:
         return HttpResponseRedirect('/Web/')
 
+    
+def flatten_dict(d, parent_key='', sep='_'):
+    items = []
+    for k, v in d.items():
+        new_key = f"{parent_key}{sep}{k}" if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class NistView(View):
+    def post(self, request, pk, *args, **kwargs):
+        customer = get_object_or_404(Customers, pk=pk)
+        customer_records = CustomerRecordSerializer(customer)
+        customer_records = customer_records.data
+        out = []
+        for record in customer_records['customerrecords']:
+            record_id = record['id']
+            record_instance = Record.objects.get(id=record_id)
+            for nmap in record['Nmaps_record']:
+                cpe = nmap['cpe']
+                out.append(cpe)
+                product = nmap['product'].replace(' ', ':').replace('+', ':').replace('httpd', 'http_server')
+                version = nmap['version'].replace(' ', ':').replace('+', ':')
+                service = nmap['service'].replace(' ', ':').replace('+', ':')
+                if cpe:
+                    TOTALCPE = f'{cpe[0]}:{product}:{version if version else service}'   
+                    out.append(TOTALCPE)
+                    if TOTALCPE: 
+                        existing_vulnerability, created = Vulnerability.objects.get_or_create(configurations__nodes__cpeMatch__criteria=TOTALCPE)
+                        if not created:
+                            continue  # Skip this iteration if a Vulnerability with the same TOTALCPE already exists
+                        time.sleep(1)
+                        url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName=cpe:2.3:{TOTALCPE}"
+                        header = {"Authorization": f"Bearer {settings.BEARER_TOKEN}"}
+                        nist_rjson_response = requests.get(url=url, headers=header, verify=False, timeout=60)
+                        nist_rjson = nist_rjson_response.json()
+                        vulns = (nist_rjson.get('vulnerabilities'))
+                        if vulns:
+                            for vuln in vulns:
+                                cve = vuln.get('cve')
+                                cve_id = cve.get('id')
+                                descriptions = cve.get('descriptions', [{}])[0]
+                                references = cve.get('references', [])
+                                metrics = cve.get('metrics', {})
+                                cvs = metrics.get('cvssMetricV2', {})
+                                cvssData = cvs.get('cvssData', {})
+                                csv = CvssMetricV2.objects.create(**cvssData)
+                                csv.save()
+                                DICnist_rjson = {
+                                    'descriptions': descriptions,
+                                    'references': references,
+                                    'nist_record_id': record_instance,
+                                    'CPEServiceID': cpe[0],
+                                    'cvssMetricV2_id': csv,
+                                    'cpe': cpe,
+                                    'service': service
+                                }
+        
+                                nist = Vulnerability.objects.create(**DICnist_rjson)
+                                nist.save()
+
+        return JsonResponse({"message": f"Data {len(customer_records['customerrecords'])} processed.{out}"})
+
+@login_required
+def create_ego_agent(request):
+    if request.method == 'POST':
+        form = EGOAgentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/EgoControlBoard/ego_agent/new/')  # Redirect to a page showing all EGOAgents
+        else:
+            print(form.errors)  # Print form validation errors
+    else:
+        data = EGOAgent.objects.all()
+        form = EGOAgentForm()
+        return TemplateResponse(request, 'EgoControl/create_ego_agent.html', {'form': form, "data": data})
+
+@login_required
+def delete_ego_agent(request, pk):
+    print('here')
+    ego_agent = get_object_or_404(EGOAgent, pk=pk)
+    if request.method == 'GET':
+        ego_agent.delete()
+    return HttpResponseRedirect('/EgoControlBoard/ego_agent/new/')
 
 def EgoControlFormViews(request):
     response = EgoControl.objects.all()
@@ -955,88 +1057,56 @@ def EgoControlFormViews(request):
     return TemplateResponse(request, 'EgoControl/EgoControlBoards.html', {"controls": response, "customers": customers})
 
 class BaseView:
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-class GnawControlCreateViewSet(BaseView,generics.ListCreateAPIView):
+class VulnerabilityViewSet(BaseView, viewsets.ModelViewSet):
+    queryset = Vulnerability.objects.all()
+    serializer_class = VulnerabilitySerializer
+
+class CvssDataViewSet(BaseView, viewsets.ModelViewSet):
+    queryset = CvssData.objects.all()
+    serializer_class = CvssDataSerializer
+
+class DescriptionViewSet(BaseView, viewsets.ModelViewSet):
+    queryset = Description.objects.all()
+    serializer_class = DescriptionSerializer
+
+class CpeMatchViewSet(viewsets.ModelViewSet):
+    queryset = CpeMatch.objects.all()
+    serializer_class = CpeMatchSerialzer
+
+class NodeViewSet(viewsets.ModelViewSet):
+    queryset = Node.objects.all()
+    serializer_class = NodeSerializer
+
+class CvssMetricV2ViewSet(BaseView, viewsets.ModelViewSet):
+    queryset = CvssMetricV2.objects.all()
+    serializer_class = CvssMetricV2Serializer
+
+class WeaknessViewSet(BaseView, viewsets.ModelViewSet):
+    queryset = Weakness.objects.all()
+    serializer_class = WeaknessSerializer
+
+class ConfigurationViewSet(BaseView, viewsets.ModelViewSet):
+    queryset = Configuration.objects.all()
+    serializer_class = ConfigurationSerializer
+
+class ReferenceViewSet(BaseView, viewsets.ModelViewSet):
+    queryset = Reference.objects.all()
+    serializer_class = ReferenceSerializer
+
+class VulnerabilityViewSet(BaseView, viewsets.ModelViewSet):
+    queryset = Vulnerability.objects.all()
+    serializer_class = TotalVulnerabilitySerializer
+
+class GnawControlCreateViewSet(BaseView, generics.ListCreateAPIView):
     serializer_class = GnawControlSerializer
     queryset = GnawControl.objects.all()
 
-class GnawControlViewSet(BaseView,generics.RetrieveUpdateDestroyAPIView):
+class GnawControlViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GnawControlSerializer
     queryset = GnawControl.objects.all()
-
-class EgoControlListViewSet(BaseView, generics.ListAPIView):
-    serializer_class = EgoControlSerializer
-    queryset = EgoControl.objects.all()
-
-class EgoControlCreateViewSet(BaseView, generics.CreateAPIView):
-    serializer_class = EgoControlSerializer
-    queryset = EgoControl.objects.all()
-
-class EgoControlViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = EgoControlSerializer
-    queryset = EgoControl.objects.all()
-
-class nistCreateViewSet(BaseView, generics.CreateAPIView):
-    serializer_class = nistCPEID_serializers
-    queryset = CPEID.objects.all()
-
-class nistListViewSet(BaseView, generics.ListAPIView):
-    serializer_class = nistCPEID_serializers
-    queryset = CPEID.objects.all()
-
-class nistViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = nistCPEID_serializers
-    queryset = CPEID.objects.all()
-    
-class nistdescription_CreateViewSet(BaseView, generics.CreateAPIView):
-    serializer_class = nist_description_serializers
-    queryset = nist_description.objects.all()
-
-class nistdescription_ListViewSet(BaseView, generics.ListAPIView):
-    serializer_class = nist_description_serializers
-    queryset = nist_description.objects.all()
-
-class nistdescription_ViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = nist_description_serializers
-    queryset = nist_description.objects.all()
-
-class Createnist_descript_Nist_serializers_viewset(BaseView, generics.CreateAPIView):
-    serializer_class = nist_descript_Nist_serializers
-    queryset = nist_description.objects.all()
-
-class Listnist_descript_Nist_serializers_viewset(BaseView, generics.ListAPIView):
-    serializer_class = nist_descript_Nist_serializers
-    queryset = nist_description.objects.all()
-
-class nist_descript_Nist_serializers_retrieve_ViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = nist_descript_Nist_serializers
-    queryset = nist_description.objects.all()
-
-class nistCreateViewSet(BaseView, generics.CreateAPIView):
-    serializer_class = Totalnist_serializers
-    queryset = nist_description.objects.all()
-
-class nistListViewSet(BaseView, generics.ListAPIView):
-    serializer_class = Totalnist_serializers
-    queryset = nist_description.objects.all()
-    
-class nistViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = Totalnist_serializers
-    queryset = nist_description.objects.all()
-
-class csv_versionCreateViewSet(BaseView, generics.CreateAPIView):
-    serializer_class = csv_version_version_serializers
-    queryset = csv_version.objects.all()
-
-class csv_versionListViewSet(BaseView, generics.ListAPIView):
-    serializer_class = csv_version_version_serializers
-    queryset = csv_version.objects.all()
-
-class csv_versionViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = csv_version_version_serializers
-    queryset = csv_version.objects.all()
 
 class ThreatModelingCreateViewSet(BaseView, generics.CreateAPIView):
     serializer_class = ThreatModelingSerializer
@@ -1126,17 +1196,17 @@ class TemplatesCreateViewSet(BaseView, generics.CreateAPIView):
     serializer_class = TemplatesSerializer
     queryset = Template.objects.all()
 
-class csv_versionCreateViewSet(BaseView, generics.CreateAPIView):
-    serializer_class = csv_version_version_serializers
-    queryset = csv_version.objects.all()
+class cvssMetricV2CreateViewSet(BaseView, generics.CreateAPIView):
+    serializer_class = CvssMetricV2Serializer
+    queryset = CvssMetricV2.objects.all()
 
-class csv_versionListViewSet(BaseView, generics.ListAPIView):
-    serializer_class = csv_version_version_serializers
-    queryset = csv_version.objects.all()
+class cvssMetricV2ListViewSet(BaseView, generics.ListAPIView):
+    serializer_class = CvssMetricV2Serializer
+    queryset = CvssMetricV2.objects.all()
 
-class csv_versionViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = csv_version_version_serializers
-    queryset = csv_version.objects.all()
+class cvssMetricV2ViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CvssMetricV2Serializer
+    queryset = CvssMetricV2.objects.all()
 
 class WordListGroupListViewSet(BaseView, generics.ListAPIView):
     serializer_class = WordListGroupSerializer
@@ -1386,3 +1456,15 @@ class EGOAgentListCreateView(BaseView,generics.ListCreateAPIView):
 class EGOAgentRetrieveUpdateDestroyView(BaseView,generics.RetrieveUpdateDestroyAPIView):
     queryset = EGOAgent.objects.all()
     serializer_class = EGOAgentSerializer
+    
+class EgoControlListViewSet(BaseView, generics.ListAPIView):
+    serializer_class = EgoControlSerializer
+    queryset = EgoControl.objects.all()
+
+class EgoControlCreateViewSet(BaseView, generics.CreateAPIView):
+    serializer_class = EgoControlSerializer
+    queryset = EgoControl.objects.all()
+
+class EgoControlViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = EgoControlSerializer
+    queryset = EgoControl.objects.all()

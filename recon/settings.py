@@ -86,6 +86,8 @@ LOGOUT_REDIRECT_URL = '/login/'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+BEARER_TOKEN = 'replaceme' #ego agent access key
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',

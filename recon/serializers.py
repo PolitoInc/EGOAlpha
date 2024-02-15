@@ -229,48 +229,68 @@ class Whois_serializers(serializers.ModelSerializer):
 #########################
 ####    Nist serializers
 #######################
-class csv_version_version_serializers(serializers.ModelSerializer):
+class CvssDataSerializer(serializers.ModelSerializer):
     class Meta:
-        model = csv_version
-        fields = (
+        model = CvssData
+        fields = [
+            'id', 'version', 'vectorString', 'accessVector', 'accessComplexity', 
+            'authentication', 'confidentialityImpact', 'integrityImpact', 
+            'availabilityImpact', 'baseScore', 'baseSeverity', 'exploitabilityScore', 
+            'impactScore', 'acInsufInfo', 'obtainAllPrivilege', 'obtainUserPrivilege', 
+            'obtainOtherPrivilege', 'userInteractionRequired'
+        ]
 
-                'version',
-                'vectorString',
-                'accessVector',
-                'accessComplexity',
-                'authentication',
-                'confidentialityImpact',
-                'integrityImpact',
-                'availabilityImpact',
-                'baseScore',
-                'baseSeverity'
-                )
-
-class nist_description_serializers(serializers.ModelSerializer):
+class DescriptionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = nist_description
-        fields = (
-            'id',
-            'CPEServiceID',
-            'csv_version_id',
-            'CPE',
-            'service',
-            'descriptions',
-            'references'
-            )
+        model = Description
+        fields = ['id', 'lang', 'value']
 
-class nistCPEID_serializers(serializers.ModelSerializer):
+class CvssMetricV2Serializer(serializers.ModelSerializer):
+    cvssData = CvssDataSerializer(many=True)
+    # Add fields for CvssMetricV2 model
     class Meta:
-        model = CPEID
-        fields = (
-            'cpeId',
-            'CPE', 
-            'service',
-            'version'
-            )
+        model = CvssMetricV2
+        fields = ['id', 'source', 'type', 'cvssData']
+
+class WeaknessSerializer(serializers.ModelSerializer):
+    description = DescriptionSerializer(many=True)
+    # Add fields for Weakness model
+    class Meta:
+        model = Weakness
+        fields = ['id', 'source', 'type', 'description']
+
+class CpeMatchSerialzer(serializers.ModelSerializer):
+    # Add fields for CpeMatch model
+    class Meta:
+        model = CpeMatch
+        fields = ['id', 'vulnerable', 'cpe23Uri', 'vulnerable']
+
+class NodeSerializer(serializers.ModelSerializer):
+    cpeMatch = CpeMatchSerialzer(many=True)
+    # Add fields for Node model
+    class Meta:
+        model = Node
+        fields = ['id', 'operator', 'negate', 'cpeMatch']
+
+class ConfigurationSerializer(serializers.ModelSerializer):
+    nodes = NodeSerializer(many=True)
+    # Add fields for Configuration model
+    class Meta:
+        model = Configuration
+        fields = ['id', 'operator', 'nodes']
+
+class ReferenceSerializer(serializers.ModelSerializer):
+    # Add fields for Reference model
+    class Meta:
+        model = Reference
+        fields = ['url', 'id', 'source', 'tags']
+
+class VulnerabilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vulnerability
+        fields = ['id', 'recVuln', 'published', 'lastModified', 'sourceIdentifier', 'vulnStatus']
 
 
-    
 #########################
 ####    word list serializers
 #######################
@@ -846,79 +866,24 @@ class DirectoryListingWordListSerializer(serializers.ModelSerializer):
             'count',
             'WordList'
             ]
-#############################################################
-#############################################################
-class Nist_serializers(serializers.ModelSerializer):
+
+class TotalVulnerabilitySerializer(serializers.ModelSerializer):
+    #recVuln = RecordSerializer(many=True)
+    descriptions = DescriptionSerializer(many=True)
+    metrics = CvssMetricV2Serializer(many=True)
+    weaknesses = WeaknessSerializer(many=True)
+    configurations = ConfigurationSerializer(many=True)
+    references = ReferenceSerializer(many=True)
+
     class Meta:
-        model = nist_description
-        fields = (
-            'id',
-            'CPEServiceID',
-            'csv_version_id',
-            'CPE',
-            'service',
-            'descriptions',
-            'references',
-            )
+        model = Vulnerability
+        fields = ['id', 'recVuln', 'published', 'sourceIdentifier', 'lastModified', 'vulnStatus', 'descriptions', 'metrics', 'weaknesses', 'configurations', 'references']
 
 #############################################################
 #############################################################
-class nist_descript_Nist_serializers(serializers.ModelSerializer):
-    CPEService = nistCPEID_serializers(many=True)
-    CsvVersion = csv_version_version_serializers(many=True)
-    class Meta:
-        model = nist_description
-        fields = (
-            'id',
-            'CPEServiceID',
-            'csv_version_id',
-            'CPE',
-            'service',
-            'descriptions',
-            'references',
-            'CPEService',
-            'CsvVersion'
-            )
-    def create(self, validated_data):
-
-        _data = validated_data.pop('CsvVersion')
-        record = csv_version.objects.create(**validated_data)
-        for record in _data:
-            csv_version.objects.create(record=record, **record)
-
-        _data = validated_data.pop('CPEService')
-        record = CPEID.objects.create(**validated_data)
-        for record in _data:
-            CPEID.objects.create(record=record, **record)
-
-        for record in _data:
-            nist.objects.create(record=record, **record)
-        return record
-
-#############################################################
-#############################################################
-class Totalnist_serializers(serializers.ModelSerializer):
-    Nist_records = nist_description_serializers(many=True)
-    class Meta:
-        model = CPEID
-        fields = (
-            'id',
-            'CPEID_record', 
-            'nist_record_id',
-            'Nist_records'
-            )
-    def create(self, validated_data):
-        _data = validated_data.pop('Nist_records')
-        record = nist_description.objects.create(**validated_data)
-        for record in _data:
-            nist_description.objects.create(record=record, **record)
-
-        for record in _data:
-            CPEID.objects.create(record=record, **record)
-        return record
 
 class TotalRecords(serializers.ModelSerializer):
-    
+    nist_record_id = TotalVulnerabilitySerializer(required=False,many=True)
     GEOCODES = GEOCODESerializer(many=True)
     foundVuln_record = FoundVulnSerializer(many=True)
     Nmaps_record = NmapSerializer(many=True)
@@ -936,7 +901,6 @@ class TotalRecords(serializers.ModelSerializer):
             'md5',
             'domainname',
             'subDomain',
-            
             'dateCreated',
             'alive',
             'ip',
@@ -954,12 +918,16 @@ class TotalRecords(serializers.ModelSerializer):
             'nucleiRecords_record',
             'Templates_record',
             'foundVuln_record',
-
+            'nist_record_id'
         )
       
 
     def create(self, validated_data):
-        
+        _data = validated_data.pop('recVuln')
+        record = Vulnerability.objects.create(**validated_data)
+        for record in _data:
+            Vulnerability.objects.create(record=record, **record)
+            
         _data = validated_data.pop('RecRequestMetaData')
         record = RequestMetaData.objects.create(**validated_data)
         for record in _data:
@@ -1001,6 +969,8 @@ class TotalRecords(serializers.ModelSerializer):
             Nmap.objects.create(record=record, **record)
         return record
    
+
+
 class CustomerRecordSerializer(serializers.ModelSerializer):
     customerrecords = TotalRecords(many=True,required=False, allow_null=True)
     credentials_customers = CredentialsSerializer(many=True,required=False, allow_null=True)

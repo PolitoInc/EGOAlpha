@@ -82,7 +82,7 @@ class tools:
                             DIC.update(headers)
                             if auth_token_json:
                                 headers.update(auth_token_json)
-                            PostRecords= requests.post(SubdomainUrl, data=data, headers=DIC, verify=False, timeout=60)
+                            PostRecords= requests.post(sub_url, data=data, headers=DIC, verify=False, timeout=60)
             elif type(subdomains) is dict:
                 for i in target:
                     data= dict.fromkeys(['tld'],i)
@@ -102,9 +102,6 @@ class tools:
 
 
 class EgoDomainSearch:
-    
-
-
     def GetHostName(subdomain, data):
         try:
             if data.startswith('.') and not subdomain.endswith('.'):
@@ -155,7 +152,7 @@ class EgoDomainSearch:
                     time.sleep(2)
                     if status != 200:
                         print(f'{url}, crtsh has enabled rate limiting, begining cooldown process.{status}')
-                        time.sleep(CoolDown)
+                        time.sleep(500)
                         return False
                     else:
                         if rson:
