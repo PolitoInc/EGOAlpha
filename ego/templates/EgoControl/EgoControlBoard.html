@@ -1,0 +1,82 @@
+﻿{% extends 'Template_base.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+
+{% block title %}
+            <h1>Ego Recon ControlBoard</h1>
+{% endblock %}
+{% block content %}
+
+        <div class="Customer_div">
+            <p> Scheduled Task</p>
+            <table class="ego_controls">
+                <tbody>
+                    <tr>
+                        <th>Group Name</th>
+                        <th>Project Name</th>
+                        <th>Port</th>
+                        <th>Host Address</th>
+                        <th>Out of Scope</th>
+                        <th>DELETE</th>
+                    </tr>
+                    {% for control in controls %}
+
+
+
+                    <tr>
+                        <td>{{control.ScanGroupingProject}}</td>
+                        <td><a href="{% url 'EgoControlBoardpk' control.id %}">{{control.ScanProjectByName}}</a></td>
+                        <td>{{control.Port}}</td>
+                        <td>{{control.HostAddress}}</td>
+                        <td>{{control.OutOfScope}}</td>
+                        <td>
+
+                            <form action="{% url 'EgoControlBoardDelete' control.id %}" method="GET">
+                                {% csrf_token %}
+                                <input type="hidden" name="_method" value="delete">
+                                <input type="submit" value="Delete">
+                            </form>
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+
+            <table class="Customers_table">
+                <tbody>
+                    <tr>
+                        <th class="table_id_customer">Customer Id</th>
+                        <th class="table_Project_Group_Name">Group Name</th>
+                        <th class="table_Project_Name">Project Name</th>
+                        <th class="table_customer_name">Customer Name</th>
+                        <th class="table_Date_Created">Date Created</th>
+                    </tr>
+                    {% for customer in customers %}
+                    <tr>
+                        <td class="table_id_customer">
+                            {{customer.id}}
+                        </td>
+                        <td class="table_Project_Group_Name">
+                            {{customer.groupingProject}}
+                        </td>
+                        <td class="table_Project_Name">
+                            <div>{{customer.nameCustomer}}</div>
+                        </td>
+                        <td class="table_customer_name">
+                            {{customer.nameProject}}
+                        </td>
+                        <td class="table_Date_Created">
+                            {{customer.dateCreated}}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+        </div>
+
+{% endblock %}

@@ -608,16 +608,11 @@ def Shredder(url, Global_Nuclei_CoolDown=[1, 2], creds=None, method='GET', paths
                         return Dask_Shredder
 
             else:
-
+                pass
         elif type(paths) is list:
             org_headers = Vuln.get("headers", {})
             if '{{base_url}}' in str(org_headers):
                 headers.update({"Referer": f"https://{url}"})
-
-            if '{{callback_server}}' in str(org_headers):
-                for o in org_headers:
-                    for v in o:
-
 
             resp_Out=[]
             for p in paths:
@@ -850,7 +845,7 @@ if __name__ == "__main__":
     #customer_id = '7cc6c56a-e201-4062-babf-db79ab2fef42'
     loop= False   
     
-    VulnUrl = f'{HostAddress}:{Port}/api/PythonNuclei/286c96ff-7cf3-48a6-9301-39bee68f1d0c'
+    VulnUrl = f'{HostAddress}:{Port}/api/PythonMantis/286c96ff-7cf3-48a6-9301-39bee68f1d0c'
 
     if auth_token_json:
         getRecords= requests.get(VulnUrl, headers=auth_token_json,verify=False)

@@ -1,0 +1,31 @@
+{% extends "AuthTemplate.html" %}
+
+{% block content %}
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(to bottom, yellow, aquamarine, blue);
+  color: #003333; /* Dark color for text */
+}
+
+.center-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.center-text {
+  text-align: center;
+}
+
+</style>
+  <h2>Scan</h2>
+  <img src="{{ qr_code_link }}" />
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Done</button>
+  </form>
+{% endblock %}

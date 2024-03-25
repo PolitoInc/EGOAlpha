@@ -1,0 +1,45 @@
+{% extends "AuthTemplate.html" %}
+
+{% block content %}
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(to bottom, yellow, aquamarine, blue);
+  color: #003333; /* Dark color for text */
+}
+
+.center-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.center-text {
+  text-align: center;
+}
+
+</style>
+
+<div class="center-div">
+  <h2 class="center-text">Sign up</h2>
+
+  <img src="data:image/jpeg;base64,{{ qr_code }}" alt="QR Code">
+
+  <form action="{% url 'Verify2FAView' %}" method="post">
+    {% csrf_token %}
+    <label for="otp"><span>Enter OTP:</span></label><br>
+    <input type="text" id="otp" name="otp" required><br>
+    <input type="submit" value="Verify OTP">
+  </form>
+  {% if messages %}  
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}

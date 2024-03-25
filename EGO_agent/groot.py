@@ -470,8 +470,7 @@ def run_nuclei(url, severity, path, Nuclei_rate_limit):
         nuclei = subprocess.check_output([f'{EgoSettings.nuclei}', '-no-color','-vv', '-jsonl', '-silent', 
                                         '-interactions-cooldown-period', '30', 
                                         '-interactions-poll-duration', '10', 
-                                        '-interactions-eviction', '30'] + Nuclei_rate_limit + ['-u', url, 
-                                        '-iserver', 'rabidio.com', '-itoken', {{EgoSettings.token}}, 
+                                        '-interactions-eviction', '30'] + Nuclei_rate_limit + ['-u', url,  
                                         '-severity', severity, '-output', path], text=True)
         return nuclei.split('\n')
     except Exception as E:
@@ -610,10 +609,8 @@ def register_and_update_agent(auth_token_json=None):
     request = get_request(Url_EgoControls, auth_token_json)
     print(request.status_code)
     responses = request.json()
-
     response_store = []
     agent_response_store = []
-
     for response in responses:
         if response.get('egoAgent') is None and not response.get('Gnaw_Completed', False):
             if EgoSettings.egoAgent:
@@ -630,7 +627,6 @@ def register_and_update_agent(auth_token_json=None):
                 data = {}  # Add necessary data here
                 agent_response = create_EGOAgent(data, auth_token_json)
                 agent_id = agent_response.get('id')  # Assuming the response contains an 'id' key
-
                 # Update EgoSettings.egoAgent with the new agent's ID
                 EgoSettings.egoAgent = agent_id
                 with open('EgoSettings.py', 'r') as file:
@@ -641,7 +637,6 @@ def register_and_update_agent(auth_token_json=None):
                             file.write(f"egoAgent = '{EgoSettings.egoAgent}'\n")
                         else:
                             file.write(line)
-
                 # Update the GnawControl instance with the new agent's ID
                 ego_id = response.get('id')  # Assuming the response contains an 'id' key
                 update_AgentControl(ego_id, agent_id, auth_token_json)
@@ -650,7 +645,6 @@ def register_and_update_agent(auth_token_json=None):
                 response = request.json()    
                 response_store.append(response)
                 agent_response_store.append(agent_response)
-
     return response_store, agent_response_store
 
 

@@ -681,10 +681,16 @@ def Ego(username, password):
 if __name__ == "__main__":
     username = f"{EgoSettings.EgoAgentUser}"
     password = f"{EgoSettings.EgoAgentPassWord}"
+    counter = 0
     while True:
         print('sss')
         print('sss')
         Ego(username, password)
-        time.sleep(10)
-        print('sleeping 10 zzzzzzz')
-
+        counter += 1
+        if counter == 3:
+            print('sleeping for 5 minutes...')
+            time.sleep(300)  # sleep for 5 minutes
+            counter = 0  # reset the counter
+        else:
+            print('sleeping 30 seconds...')
+            time.sleep(30)

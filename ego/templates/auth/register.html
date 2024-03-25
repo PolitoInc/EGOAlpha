@@ -1,0 +1,55 @@
+﻿{% extends "AuthTemplate.html" %}
+
+{% block content %}
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(to bottom, yellow, aquamarine, blue);
+  color: #003333; /* Dark color for text */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.center-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+</style>
+<div class="center-div">
+  <h2>Sign up</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Sign up</button>
+  </form>
+
+  {% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+</div>
+{% endif %}
+{% endblock %}

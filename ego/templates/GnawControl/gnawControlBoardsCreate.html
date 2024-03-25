@@ -1,0 +1,18 @@
+﻿ {% extends 'Template_base.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}
+            <h1>Nuclei ControlBoard</h1>
+{% endblock %}
+
+
+{% block content %}
+        <div class="Customers_Create">
+            <form method="POST" action="{% url 'GnawControlBoardsCreate' %}">
+                {% csrf_token %}
+                {{form.as_p}}
+                <input type="submit" value="OK">
+            </form>
+        </div>
+{% endblock %}

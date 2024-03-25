@@ -32,7 +32,7 @@ from selenium.webdriver.chrome.options import Options
 
 import EgoSettings
 seen = []
-print('{EgoSettings.dump}', f'{EgoSettings.dump}/lib/pyasn/data/ipsn_db_file_name.dat')
+print('{EgoSettings.dump}', f'{EgoSettings.dump}/libs/pyasn/data/ipsn_db_file_name.dat')
 if str(os.name) == 'nt':
     asndb = pyasn.pyasn(r'.\pyasn\data\ipsn_db_file_name.dat')
 else:

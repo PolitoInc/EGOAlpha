@@ -1,0 +1,43 @@
+{% extends 'Template_base.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+{% block title %}
+    EGO a vulnerability scanner
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between;">
+  <div>
+    <h2>User Profile</h2>
+    <form method="POST">
+    {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Save</button>
+    </form>
+    <h3>User Details</h3>
+    <p>Username: {{ form.instance.user.username }}</p>
+    <p>Email: {{ form.instance.user.email }}</p>
+    <p>First name: {{ form.instance.user.first_name }}</p>
+    <p>Last name: {{ form.instance.user.last_name }}</p>
+    <!-- Add more fields as needed -->
+  </div>
+  <div>
+    <h2>Group Invitation</h2>
+    <form method="POST">
+    {% csrf_token %}
+      {{ group_invitation_form.as_p }}
+      <button type="submit">Invite</button>
+    </form>
+  </div>
+  <div>
+<h2>Group Membership</h2>
+	<ul>
+	  {% for group in user_groups %}
+		<li>{{ group.name }}</li>
+	  {% endfor %}
+	</ul>
+    </div>
+</div>
+
+{% endblock %}

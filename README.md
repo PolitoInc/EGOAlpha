@@ -85,35 +85,3 @@ python3 mantis.py
 pip3 install -r requirements.txt
 pip3 install "censys==2.0.7; python_version > '3.8'" "censys==0.0.8; python_version <= '3.8'"
 ```
-
-
-# Settings up Ego Agents
-The ego agents were design to be as easy to use as possible not relying on command switches but switches controlled by the api. This being said we do need to modify the EgoSettings.py file so that when Rocket, Groop, or Mantis run they know where home is and all the dependencies to run. 
-
-###egoAgent
-When setting up an agent we need to create the agent within the Ego, go to the **Create EgoAgent** tab. 
-```
-egoAgent = '' # uuid
-```
-### host & port settings
-the agent is dumb and needs the url to not have any appended forward slashes like so `https://exmaple.com/` it needs to be in this format `https://example.com`
-```
-HostAddress = "http://example.com"
-Port = "5000"
-```
-### Authenication
-When an agent is registered with the user's API, the application will give the agent a bearer token that the agent will use to authenticate.
-```
-bearer_token
-```
-
-
-```
-egoAgent = '' # uuid
-HostAddress = "http://example.com"
-Port = "5000"
-api_accessKey = "" #ego agent access key
-agentName = "Home"
-dump = "/home/ego/EGO_agent" #nuclei directory /dump 
-nuclei = "/usr/local/bin/nuclei"
-```

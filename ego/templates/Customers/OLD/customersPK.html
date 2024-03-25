@@ -1,0 +1,264 @@
+﻿{% extends 'Template_pk.html' %}
+{% load bootstrap5 %}
+{% load static %}
+{% load type_filter %}
+
+{% block title %}
+	{{Customer.nameCustomer}}
+{% endblock %}
+
+{% block customer_records %}
+<!-- Add this to your HTML file -->
+<div id="popup" class="popup">
+    <a href="#" class="close">&times;</a>
+    <div id="popup-content"></div>
+</div>
+<div class="CustomerRecords">
+    <div class="top">
+        <div class="left">
+            <div class="CustomerButton">
+                <script>
+                    function confirmAction() {
+                        return confirm("Are you sure you want to perform this action?");
+                    }
+                </script>
+                <div class="CustomerButtonNest">
+                    <form>
+                        <button class="btn btn-success" style="width:226px; height:52.5px; font-weight: bold; font-size: 20px;">Update Customer</button>
+                    </form>
+                </div>
+                <div class="CustomerButtonNest">
+                    <form method="post" action="{% url 'NistView' Customer.id %}" onclick="return confirmAction()">
+                        {% csrf_token %}
+                        <button class="btn btn-primary" style="width:226px; height:52.5px; font-weight: bold; font-size: 20px;" type="submit">Parse</button>
+                    </form>
+                </div>
+                <div class="CustomerButtonNest">
+                    <form method="get" action="{% url 'CustomerPkDelete' Customer.id %}" onsubmit="return confirmAction()">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" style="width:226px; height:52.5px; font-weight: bold; font-size: 20px;" type="submit">Delete Records</button>
+                    </form>
+                </div>
+            </div>
+            <!-- hidden until button clicked on display PK_Create -->
+            <div class="PK_Create" id="pk-create-content">
+                <form action="{% url 'CustomerPk' Customer.id %}" method="post">
+                    {% csrf_token %}
+                    <table>
+                        {% for field in form %}
+                            <tr>
+                                <td>{{ field.label_tag }}</td>
+                                <td class="field">{{ field }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                    <input type="submit" value="OK">
+                </form>
+            </div>
+            <div class="Container">
+                {% for key, value in Customer.items %}
+                    {% if key != "customerrecords" and key != "whois_customers" and key != "domainScope" and key != 'unique_geocodes' %}
+                        <div class="bulk_values">
+                            <p style="padding: 0;"><strong>{{ key }}</strong>: {{ value }}</p>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="right">
+            <!-- data display -->
+            {% for key, value in Customer.items %}
+                {% if key == "domainScope" %}
+                    <div class="domainScope">
+                        <tr class="div_titles">
+                            <td><strong>{{ key }}</strong></td>
+                            <td>
+                                {% for x in value %}
+                                    {% with new_x=x|slice:"2:" %}
+                                        <p class="no-padding name"><a href="?search={{ new_x }}">{{x}}</a></p>
+                                    {% endwith %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    </div>
+                {% elif key == "unique_geocodes" %}
+                    <div class="sub_list_whois">
+                        <b style="color: white; background-color: blue;">Unique GeoCodes</b>
+                        <table id="sorttable">
+                            <thead>
+                                <tr>
+                                    <th>country</th>
+                                    <th>ip address</th>
+                                    <th>city</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for val in value %}
+                                    <tr>
+                                        <td>{{ val|get_item:'country' }}</td>
+                                        <td>{{ val|get_item:'ip_address' }}</td>
+                                        <td>{{ val|get_item:'city' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% elif key == "whois_customers" %}
+                    <div class="sub_list_whois">
+                        <div><strong>{{ key }}</strong>:</div>
+                        <table class="whois_table">
+                            {% for sub_value in value %}
+                                <tr class="tr_whois">
+                                    <td>
+                                        {% for sub_key, sub_values in sub_value.items %}
+                                            {% if sub_key == "state" %}
+                                            {% elif sub_key == "map_image" %}
+                                                <p class="no_padding_name">{{ sub_key }}</p>
+                                                {% with new_x=sub_values|slice:"6:" %}
+                                                    <iframe src="{{ new_x }}"></iframe>
+                                                {% endwith %}
+                                            {% elif sub_key != "id" and sub_key != "customer_id" and sub_values != "None" and sub_values != None %}
+                                                <p class="no_padding_name">{{ sub_key }}: <span class="sub_values">{{ sub_values }}</span></p>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="bottom">
+        {% for key, value in Customer.items %}
+            {% if key == "customerrecords" %}
+                <div class="bulk_values_customerrecords">
+                    <div><strong>{{ key }}</strong>:</div>
+                    <form method="GET" action="">
+                        <input type="text" name="search" placeholder="Search">
+                        <input type="submit" value="Search">
+                    </form>
+                    <ul class="pagination">
+                        {% if page_obj.has_previous %}
+                            <li><a href="?page={{ page_obj.previous_page_number }}">previous</a></li>
+                        {% endif %}
+                        <li class="current">{{ page_obj.number }}</li>
+                        {% if page_obj.has_next %}
+                            <li><a href="?page={{ page_obj.next_page_number }}">next</a></li>
+                        {% endif %}
+                    </ul>
+                    {% for sub_value in value %}
+                        <div class="records" onclick="showPopup(this)">
+                            {% for sub_keys, sub_values in sub_value.items %}
+                                <table>
+                                    {% if sub_keys == "" %}
+                                        <tr class="div_titles">{{sub_keys}}
+                                            {% for Nested_dicts in sub_values %}
+                                                {% for sub_key in Nested_dicts %}
+                                                    <p class="no-padding name">{{ sub_key }}:</p>
+                                                {% endfor %}
+                                            {% endfor %}
+                                        </tr>
+                                    {% elif sub_keys == "GEOCODES" or sub_keys == "RecRequestMetaData" or sub_keys == "Certificates_record" or sub_keys == "Nmaps_record" or sub_keys == "Templates_record" or sub_keys == "DNSQuery_record" or sub_keys == "DNSAuthority_record" %}
+                                        {% if sub_values %}
+                                            {% if sub_keys == 'Templates_record'%}
+                                                {% for info in sub_values %}
+                                                    <!-- Your nested table structure here -->
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr class="div_titles_nested">
+                                                    <td><strong>{{sub_keys}}:</strong></td>
+                                                    <td class="flex-container">
+                                                        {% for nes in sub_values %}
+                                                            <div class="flex-item">
+                                                                {% for nes_key, nes_val in nes.items %}
+                                                                    <span class="nes-key"><b>{{nes_key}}:</b></span>
+                                                                    <span class="nes-val">{{nes_val}}</span></br>
+                                                                {% endfor %}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% elif sub_keys == "md5" or sub_keys == "customer_id" or sub_keys == "id" or sub_keys == "foundVuln_record" %}
+                                        <!-- Add your handling code here -->
+                                    {% elif sub_values == None or sub_values.0 == None %}
+                                        <!-- Add your handling code here -->
+                                    {% elif sub_keys == "subDomain" %}
+                                        <tr class="div_titles_subDomain"><p class="subDomain_title">{{sub_values}}</p></tr>
+                                    {% elif sub_keys == "domainname" %}
+                                        <tr class="div_titles_domainname"><p class="domain_title">{{sub_values}}</p></tr>
+                                    {% else %}
+                                        <tr class="div_titles">
+                                            <td>
+                                                <span class="top-key"><b>{{sub_keys}}:</b></span>
+                                                <span class="top-val">{{sub_values}}</span>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </table>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+<!-- javascript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var updateButton = document.querySelector('button');
+        var pkCreate = document.querySelector('.PK_Create');
+
+        updateButton.addEventListener('click', function() {
+            if (pkCreate.style.display === 'none' || pkCreate.style.display === '') {
+                pkCreate.style.display = 'block';
+            } else {
+                pkCreate.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+
+    <script>
+        function showPopup(element) {
+            var popup = document.getElementById('popup');
+            var popupContent = document.getElementById('popup-content');
+            popupContent.innerHTML = element.innerHTML;
+            window.location.hash = 'popup';
+        }
+
+        document.querySelector('.close').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.hash = '';
+        });
+    </script>
+
+        <script>
+        function stripSpecialChars(query) {
+            return query.replace(/\*/g, '').replace(/\./g, '');
+        }
+
+        function handleSearch(event) {
+            event.preventDefault();
+            var query = document.getElementById('searchInput').value;
+            var strippedQuery = stripSpecialChars(query);
+            window.location.href = "?search=" + strippedQuery;
+        }
+    </script>
+
+
+{% endblock %}
+
+{% block description %}
+    <div class="left">
+        <!-- data display -->
+        {% for key, value in Customer.items %}
+
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -17,8 +17,6 @@ from .EgoDomainSearch import *
 #EgoNmap.NmapScan
 
 class EgoNmap:
-    
-
     def NmapScan( data, portscan_bool, versionscan_bool, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=None):
         scan_all_ports = False
         scriptscan_bool = False
@@ -47,10 +45,9 @@ class EgoNmap:
                             # exception nmap nested boop
                             print('exception nmap top_1000_port_scan_result failed nested nmap failed out8')
                             print('exception nmap top_1000_port_scan_result failed   nested nmap failed out8')
-                            print(list_string_ports)
-                            print(ports)
+                            print('top_1000_ports')
                             print('exception nmap top_1000_port_scan_result failed nested nmap failed out8')
-                            return('exception nmap top_1000_port_scan_result failed nested nmap failed out8')                          
+                            continue
                     else:
                         data.update({"alive": False})
                         return data
@@ -72,10 +69,9 @@ class EgoNmap:
                             # exception nmap nested boop
                             print('exception nmap top_1000_port_scan_result failed nested nmap failed out8')
                             print('exception nmap top_1000_port_scan_result failed   nested nmap failed out8')
-                            print(list_string_ports)
-                            print(ports)
+                            print('top_1000_ports')
                             print('exception nmap top_1000_port_scan_result failed nested nmap failed out8')
-                            return('exception nmap top_1000_port_scan_result failed nested nmap failed out8')  
+                            continue
                     else:
                         data.update({"alive": False})
                         return data
@@ -118,10 +114,9 @@ class EgoNmap:
                             # exception nmap nested boop
                             print('exception nmap nested boop nmap failed nested nmap failed out8')
                             print('exception nmap nested boop nmap failed   nested nmap failed out8')
-                            print(list_string_ports)
-                            print(ports)
+                            print('top_1000_ports3')
                             print('exception nmap nested boop nmap failed nested nmap failed out8')
-                            return('exception nmap nested boop nmap failed nested nmap failed out8')                                
+                            pass
             elif versionscan_bool == True:
                 if len(data['ip']) > 0:
                     domains = data['ip']
@@ -145,7 +140,7 @@ class EgoNmap:
                         if len(ports) > 1:
                             list_string_ports = ",".join(ports)
                         else:
-                            list_string_ports = ports
+                            list_string_ports = ports[0] if ports else ''
                         try:
                             nmap = nmap3.Nmap()
                             version_scan_result = nmap.nmap_version_detection(domain,args=f' -p {list_string_ports} -Pn --max-retries 6 --min-parallelism 6')
@@ -157,7 +152,6 @@ class EgoNmap:
                             print(ports)
                             print('nmap failed nested nmap failed out7')
                             print(version_scan_result)
-                            return('nmap failed nested nmap failed out7')            
                             continue
                         for i in version_scan_result:
                             i = version_scan_result[i]
@@ -249,7 +243,7 @@ class EgoNmap:
                                     headers = {"Content-type": "application/json", "Accept": "application/json"} 
                                     headers.update(auth_token_json)
                                     postRecords = requests.post(urlPost, data=recs, headers=headers, verify=False, timeout=60)
-                                    return postRecords.json()
+                    return data
             elif scriptscan_bool == True:
                 print('version scanversion scanversion scanversion scanversion scanversion scanversion scanversion scanversion scanversion scan')
                 print('version scanversion scanversion scanversion scanversion scanversion scanversion scanversion scanversion scanversion scan')
@@ -437,9 +431,9 @@ class EgoNmap:
                                 print('nmap failed nested nmap failed out')
                                 print('nmap failed nested nmap failed out')
                                 print('nmap failed nested nmap failed out')
-                                return('nmap failed nested nmap failed out')
+                                return(data)
 
             else:
-                return('nmap failed nested nmap failed out')
+                return(data)
 
 

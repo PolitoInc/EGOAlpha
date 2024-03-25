@@ -1,0 +1,62 @@
+﻿{% extends "AuthTemplate.html" %}
+
+{% block content %}
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(to bottom, yellow, aquamarine, blue);
+  color: #003333; /* Dark color for text */
+}
+
+.form-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.center-div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+</style>
+
+<div class="center-div">
+  <h2 class="center-text">Login</h2>
+  <p>Weclome to ego a vulnerability scanner suite. </p>
+  <form method="post" action="{% url 'login' %}">
+
+    {% csrf_token %}
+    <div class="form-group">
+      {{ form.username.label_tag }} 
+      {{ form.username }}
+    </div>
+    <div class="form-group">
+      {{ form.password.label_tag }} 
+      {{ form.password }}
+    </div>
+    <div class="form-group">
+      {{ form.otp_code.label_tag }} 
+      {{ form.otp_code }}
+    </div>
+    <button type="submit">Log in</button>
+  </form>
+  <a href="/register/" class="center-text">register</a>
+</div>
+{% endblock %}
