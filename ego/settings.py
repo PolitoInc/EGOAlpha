@@ -96,9 +96,9 @@ LOGOUT_REDIRECT_URL = '/login/'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'cat',
+        'NAME': 'test',
         'USER': 'postgres',
-        'PASSWORD': 'wlNw7QMc5FghbLI6Umi9',
+        'PASSWORD': 'test',
         'HOST': 'localhost',
         'PORT': '5432',
     }
