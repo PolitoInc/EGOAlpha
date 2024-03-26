@@ -21,6 +21,8 @@ sudo apt install python3-pip
 # Install Python requirements
 pip3 install -r requirements.txt
 pip3 install "censys==2.0.7; python_version > '3.8'" "censys==0.0.8; python_version <= '3.8'"
+python3 manage.py makemigrations
+python3 manage.py migrate
 
 # Update packages again
 sudo apt-get update
@@ -38,3 +40,12 @@ source ~/.profile
 
 # Install nuclei
 go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+
+# Prompt the user to enter a new value for expected_secret_code
+echo "Please enter a new value for expected_secret_code:"
+read new_secret_code
+
+# Replace the value of expected_secret_code in /ego/views.py
+sed -i "s/expected_secret_code = .*/expected_secret_code = '$new_secret_code'/" /ego/views.py
+
+python3 manage.py collectstatic
