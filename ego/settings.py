@@ -27,7 +27,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 SECRET_KEY = ';;F@?UcdupcVfgxy~1E9esJMqz,U0z?!AX566!Q7x%G0!ia.RJ'
 
 # SECURITY WARNING: don't run upcVfgxy~1E9esJMqz,U0z?with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 DATA_UPLOAD_MAX_MEMORY_SIZE	= 17179869184
@@ -143,7 +143,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

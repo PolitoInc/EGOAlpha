@@ -8,7 +8,13 @@ sudo apt-get install postgresql
 
 # Create PostgreSQL user and database
 sudo -u postgres psql -c "CREATE USER postgres;"
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'test';"
+# Prompt the user to enter a new password for the PostgreSQL user
+echo "Please enter a new password for the PostgreSQL user:"
+read postgres_password
+
+# Change the PostgreSQL user's password
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '$postgres_password';"
+
 sudo -u postgres psql -c "CREATE DATABASE test;"
 
 # Install nmap
@@ -19,7 +25,7 @@ sudo apt install python3 python3-dev
 sudo apt install python3-pip
 
 # Install Python requirements
-pip3 install -r requirements.txt
+pip3 install -r ./ ego/requirements.txt
 pip3 install "censys==2.0.7; python_version > '3.8'" "censys==0.0.8; python_version <= '3.8'"
 python3 manage.py makemigrations
 python3 manage.py migrate
