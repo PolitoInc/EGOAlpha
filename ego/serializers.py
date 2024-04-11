@@ -94,12 +94,11 @@ class limitedCustomerSerializer(serializers.ModelSerializer):
             'nameProject',
             'nameCustomer',
             'dateCreated',
-            'egoOnly',
+            'reconOnly',
             'toScanDate',
             'endToScanDate',
             'lastEgoScan',
             'EgoReconScan',
-            'customDaysUntilNextScan',
             'FoundTLD',
             'FoundASN',
             'skipScan',
@@ -189,7 +188,6 @@ class CustomerSerializer(serializers.ModelSerializer):
             'URLCustomer',
             'lastEgoScan',
             'EgoReconScan',
-            'egoOnly',
             'passiveAttack',
             'agressiveAttack',
             'notes',
@@ -947,7 +945,7 @@ class CustomerRecordSerializer(serializers.ModelSerializer):
     whois_customers = Whois_serializers(many=True,required=False, allow_null=True)
     record_count = serializers.SerializerMethodField()
     unique_geocodes = serializers.SerializerMethodField()
-
+    nmap_products = serializers.SerializerMethodField()  # Nmap pseudo field
     class Meta:
         model = Customers
         fields = (
@@ -980,7 +978,24 @@ class CustomerRecordSerializer(serializers.ModelSerializer):
             'record_count',
             'unique_geocodes',
             'customerrecords',
+            'nmap_products'
         )
+
+    def get_nmap_products(self, obj):
+        # Get the Records associated with the Customer
+        records = Record.objects.filter(customer_id=obj.id)
+
+        # Get the Nmap products
+        product_dict = {}
+        for record in records:
+            nmaps = Nmap.objects.filter(record_id=record.id)
+            for nmap in nmaps:
+                if nmap.product in product_dict:
+                    product_dict[nmap.product] += 1
+                else:
+                    product_dict[nmap.product] = 1
+
+        return product_dict
 
     def get_record_count(self, obj):
         return obj.customerrecords.count()
@@ -1029,7 +1044,6 @@ class CustomerRecordSerializer(serializers.ModelSerializer):
         instance.endToScanDate = validated_data.get('endToScanDate', instance.endToScanDate)
         instance.lastEgoScan = validated_data.get('lastEgoScan', instance.lastEgoScan)
         instance.EgoReconScan = validated_data.get('EgoReconScan', instance.EgoReconScan)
-        instance.egoOnly = validated_data.get('egoOnly', instance.egoOnly)
         instance.passiveAttack = validated_data.get('passiveAttack', instance.passiveAttack)
         instance.agressiveAttack = validated_data.get('agressiveAttack', instance.agressiveAttack)
         instance.URLCustomer = validated_data.get('URLCustomer', instance.URLCustomer)

@@ -22,7 +22,7 @@ class UserProfileForm(forms.ModelForm):
 class AdminUserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['user', 'email', 'role']
+        fields = ['email', 'role']
 
 class GroupInvitationForm(forms.ModelForm):
     class Meta:
@@ -50,56 +50,22 @@ class CustomUserCreationForm(UserCreationForm):
 User = get_user_model()
 
 
-class CustomersFormCreate(forms.ModelForm):
-    class Meta:
-        model = Customers
-        fields = ['user', 'groupingProject', 'nameProject', 'nameCustomer', 'URLCustomer', 'customDaysUntilNextScan', 'toScanDate', 'endToScanDate', 'EgoReconScan', 'reconOnly', 'passiveAttack', 'agressiveAttack', 'notes', 'OutOfScopeString', 'urlScope', 'outofscope', 'domainScope', 'Ipv4Scope', 'Ipv6Scope', 'FoundTLD', 'FoundASN', 'skipScan']
-        widgets = {
-            'user': forms.Select(attrs={'class': 'form-control', 'style': 'width:300px;'}),
-            'groupingProject': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:300px;'}),
-            'nameProject': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:300px;', 'font-size': '15'}),
-            'nameCustomer': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:300px;'}),
-            'URLCustomer': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:400px;'}),
-            'customDaysUntilNextScan': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:200px;'}),
-            'toScanDate': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'style': 'width:400px;'}),
-            'endToScanDate': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'style': 'width:400px;'}),
-            'EgoReconScan': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
-            'reconOnly': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
-            'passiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
-            'agressiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control ', 'style': 'width:500px;'}),
-            'OutOfScopeString': forms.TextInput(attrs={'class': 'form-control', 'style': 'width:500px;'}),
-            'urlScope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
-            'outofscope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
-            'domainScope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
-            'Ipv4Scope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
-            'Ipv6Scope': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
-            'FoundTLD': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
-            'FoundASN': forms.Textarea(attrs={'class': 'form-control', 'style': 'width:500px;'}),
-            'skipScan': forms.CheckboxInput(attrs={'class': 'form-check-input', 'value': 'False'}),
-        }
-    def __init__(self, *args, **kwargs):
-        super(CustomersFormCreate, self).__init__(*args, **kwargs)
-        self.fields['groupingProject'].initial = self.instance.groupingProject if self.instance.pk else 'Ego'
-
-
 class SimpleCustomersFormCreate(forms.ModelForm):
     class Meta:
         model = Customers
-        fields = ['user', 'groupingProject', 'nameProject', 'nameCustomer', 'URLCustomer', 'customDaysUntilNextScan', 'toScanDate', 'endToScanDate', 'EgoReconScan',
-                  'reconOnly', 'passiveAttack', 'agressiveAttack', 'notes', 'OutOfScopeString', 'urlScope', 'outofscope', 'domainScope', 'Ipv4Scope', 'Ipv6Scope', 'FoundTLD', 'FoundASN', 'skipScan']
+        fields = ['groupingProject', 'nameProject', 'nameCustomer', 'URLCustomer',
+                  'notes', 'OutOfScopeString', 'urlScope', 'outofscope', 'domainScope', 'Ipv4Scope', 'Ipv6Scope', 'skipScan']
 
 
 class create_egocontrol(forms.ModelForm):
     class Meta:
         model = EgoControl
         fields = [
-            'ScanProjectByID', 'internal_scanner', 'ScanGroupingProject', 'ScanProjectByName', 'OutOfScope', 
-            'chunk_size', 'CoolDown', 'CoolDown_Between_Queries', 'Port', 'HostAddress', 'passiveAttack', 
-            'agressiveAttack', 'portscan_bool', 'versionscan_bool', 'Scan_Scope_bool', 'Scan_IPV_Scope_bool', 
-            'Scan_DomainName_Scope_bool', 'scriptscan_bool', 'BruteForce', 'BruteForce_WL', 'scan_records_censys', 
-            'crtshSearch_bool', 'Update_RecordsCheck', 'LoopCustomersBool', 'Completed', 'Gnaw_Completed', 'failed', 
-            'scan_objects'
+            'ScanProjectByID', 'ScanGroupingProject', 'ScanProjectByName', 
+            'OutOfScope', 'chunk_size', 'Port', 'HostAddress', 'Scan_IPV_Scope_bool', 
+            'Scan_DomainName_Scope_bool', 'BruteForce', 'BruteForce_WL', 'scan_records_censys', 
+            'crtshSearch_bool', 'Update_RecordsCheck', 'LoopCustomersBool', 
+            'Completed', 'Gnaw_Completed', 'failed', 'scan_objects'
         ]
         widgets = {
             'ScanProjectByID': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 350px;'}),
@@ -107,18 +73,18 @@ class create_egocontrol(forms.ModelForm):
             'ScanProjectByName': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 250px;'}),
             'OutOfScope': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 450px;'}),
             'chunk_size': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
-            'CoolDown': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
-            'CoolDown_Between_Queries': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 120px;'}),
+            #'CoolDown': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'}),
+            #'CoolDown_Between_Queries': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 120px;'}),
             'Port': forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 120px;'}),
             'HostAddress': forms.TextInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
-            'passiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'agressiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'portscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'versionscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'Scan_Scope_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            #'passiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            #'agressiveAttack': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            #'portscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            #'versionscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            #'Scan_Scope_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'Scan_IPV_Scope_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'Scan_DomainName_Scope_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'scriptscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            #'scriptscan_bool': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'BruteForce': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'BruteForce_WL': forms.Textarea(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
             'scan_records_censys': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
@@ -133,23 +99,23 @@ class create_egocontrol(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(create_egocontrol, self).__init__(*args, **kwargs)
         self.fields['ScanProjectByID'].initial = 'Unique Identifier'
-        self.fields['internal_scanner'].initial = False
+        #self.fields['internal_scanner'].initial = False
         self.fields['ScanGroupingProject'].initial = 'Group Name'
         self.fields['ScanProjectByName'].initial = 'Project Name'
         self.fields['OutOfScope'].initial = ''
         self.fields['chunk_size'].initial = 12
-        self.fields['CoolDown'].initial = 2
-        self.fields['CoolDown_Between_Queries'].initial = 6
+        #self.fields['CoolDown'].initial = 2
+        #self.fields['CoolDown_Between_Queries'].initial = 6
         self.fields['Port'].initial = 9000
         self.fields['HostAddress'].initial = 'http://127.0.0.1'
-        self.fields['passiveAttack'].initial = False
-        self.fields['agressiveAttack'].initial = True
-        self.fields['portscan_bool'].initial = True
-        self.fields['versionscan_bool'].initial = True
-        self.fields['Scan_Scope_bool'].initial = True
+        #self.fields['passiveAttack'].initial = False
+        #self.fields['agressiveAttack'].initial = True
+        #self.fields['portscan_bool'].initial = True
+        #self.fields['versionscan_bool'].initial = True
+        #self.fields['Scan_Scope_bool'].initial = True
         self.fields['Scan_IPV_Scope_bool'].initial = False
         self.fields['Scan_DomainName_Scope_bool'].initial = True
-        self.fields['scriptscan_bool'].initial = True
+        #self.fields['scriptscan_bool'].initial = True
         self.fields['BruteForce'].initial = False
         self.fields['BruteForce_WL'].initial = list()
         self.fields['scan_records_censys'].initial = False

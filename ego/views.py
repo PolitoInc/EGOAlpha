@@ -58,30 +58,76 @@ from twilio.twiml.messaging_response import MessagingResponse
 from django.core.mail import send_mail
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+
+class UserProfilePasswordResetForm(PasswordResetForm):
+    def get_users(self, email):
+        """Return a User object for the given email."""
+        user_profiles = UserProfile.objects.filter(email__iexact=email, user__is_active=True)
+        return (user_profile.user for user_profile in user_profiles)
+
+class UserProfilePasswordResetView(PasswordResetView):
+    form_class = UserProfilePasswordResetForm
+    success_url = reverse_lazy('password_reset_done')
+
+    def form_valid(self, form):
+        opts = {
+            'use_https': self.request.is_secure(),
+            'token_generator': default_token_generator,
+            'from_email': self.from_email,
+            'email_template_name': self.email_template_name,
+            'subject_template_name': self.subject_template_name,
+            'request': self.request,
+            'html_email_template_name': self.html_email_template_name,
+            'extra_email_context': self.extra_email_context,
+        }
+        form.save(**opts)
+        return super().form_valid(form)
+
+class UserProfilePasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'registration/password_reset_done.html'
+
+class UserProfilePasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'registration/password_reset_confirm.html'
+    form_class = SetPasswordForm
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
+
+class UserProfilePasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'registration/password_reset_complete.html'
 
 class UserProfileView(View):
     def get(self, request, *args, **kwargs):
-        user_profile = get_object_or_404(UserProfile, user=request.user)
-        if user_profile.role == 'ADMIN':
-            form = AdminUserProfileForm(instance=user_profile)
-            group_invitation_form = GroupInvitationForm()
-            # Query all users in the admin group
-            admin_users = UserProfile.objects.filter(role='ADMIN')
-            # Query all group invitations
-            group_invitations = GroupInvitation.objects.all()
+        if request.user.is_authenticated:
+            user_profile = get_object_or_404(UserProfile, user=request.user)
+            if user_profile.role == 'ADMIN':
+                form = AdminUserProfileForm(instance=user_profile)
+                group_invitation_form = GroupInvitationForm()
+                # Query all users in the admin group
+                admin_users = UserProfile.objects.filter(role='ADMIN')
+                # Query all group invitations
+                group_invitations = GroupInvitation.objects.all()
+            else:
+                form = UserProfileForm(instance=user_profile)
+                group_invitation_form = None
+                admin_users = None
+                group_invitations = None
+            return TemplateResponse(request, 'Account/account.html', {
+                'form': form, 
+                'group_invitation_form': group_invitation_form,
+                'admin_users': admin_users,
+                'group_invitations': group_invitations
+            })
         else:
-            form = UserProfileForm(instance=user_profile)
-            group_invitation_form = None
-            admin_users = None
-            group_invitations = None
-        return TemplateResponse(request, 'Account/account.html', {
-            'form': form, 
-            'group_invitation_form': group_invitation_form,
-            'admin_users': admin_users,
-            'group_invitations': group_invitations
-        })
-
+            return HttpResponseRedirect(reverse_lazy('login'))
+        
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         user_profile = get_object_or_404(UserProfile, user=request.user)
@@ -215,31 +261,36 @@ def register(request):
 
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            raw_password = form.cleaned_data.get('password1')
-            user = authenticate(username=user.username, password=raw_password)
-            login(request, user)
-            print(f"User after login: {request.user}")  # This should print the user's username
+            try:
+                with transaction.atomic():
+                    user = form.save()
+                    raw_password = form.cleaned_data.get('password1')
+                    user = authenticate(username=user.username, password=raw_password)
+                    login(request, user)
+                    print(f"User after login: {request.user}")  # This should print the user's username
 
-            # Check if a UserProfile for the user already exists
-            if not UserProfile.objects.filter(user=user).exists():
-                # If not, create a new UserProfile for the user
-                user_profile = UserProfile.objects.create(user=user, role='ADMIN')
+                    # Check if a UserProfile for the user already exists
+                    if not UserProfile.objects.filter(user=user).exists():
+                        # If not, create a new UserProfile for the user
+                        user_profile = UserProfile.objects.create(user=user, role='ADMIN')
 
-                # Assign the user to a tenant based on your business logic
-                # For example, if you have a form field where the user selects their tenant during registration:
-                tenant_name = form.cleaned_data.get('tenant')
-                tenant = Tenant.objects.get(name=tenant_name)
-                user_profile.tenant = tenant
-                user_profile.save()
+                        # Assign the user to a tenant based on your business logic
+                        # For example, if you have a form field where the user selects their tenant during registration:
+                        tenant_name = form.cleaned_data.get('tenant')
+                        tenant = Tenant.objects.get(name=tenant_name)
+                        user_profile.tenant = tenant
+                        user_profile.save()
 
-            messages.success(request, 'Registration Succeeded')
-            response = redirect('/two-fa-register-page')  # Redirect to the 2FA page
-            return response
+                messages.success(request, 'Registration Succeeded')
+                response = redirect('/two-fa-register-page')  # Redirect to the 2FA page
+                return response
+            except:
+                messages.error(request, 'Registration Failed: An error occurred.')
+                return render(request, 'auth/register.html', {'form': form})
         else:
             messages.error(request, 'Registration Failed: Please fix form errors.')
             return render(request, 'auth/register.html', {'form': form})
-            
+
     else:
         invite_code = request.GET.get('invite_code')
         if invite_code:
@@ -432,7 +483,7 @@ def CustomersCreateurl(request, format=None):
         form = SimpleCustomersFormCreate(request.POST)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect('/success-url/')
+            return HttpResponseRedirect('/Customers/Create')
     else:
         form = SimpleCustomersFormCreate()
 
@@ -442,8 +493,9 @@ def CustomersCreateurl(request, format=None):
 def CustomerPkDelete(request, pk, format=None):
     if request.method == 'GET':
         customer = get_object_or_404(Customers, pk=pk)
-        customer.customerrecords.all().delete()  # Delete all related 'customerrecords'
-        return HttpResponseRedirect(f'/Customers/{pk}')
+        records = Record.objects.filter(customer_id=customer)
+        records.delete()
+        return JsonResponse({'status': 'success'}, status=204)
     
 #retrieve customer record
 @login_required

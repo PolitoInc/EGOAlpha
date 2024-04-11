@@ -9,6 +9,11 @@ from django.contrib.auth import views as auth_views
 app_name = 'ego'
 urlpatterns = [
     path('', Login_View.as_view(), name='login'),
+    path('login/', Login_View.as_view(), name='login'),
+    path('password_reset/', UserProfilePasswordResetView.as_view(), name='password_reset'),
+    path('password_reset/done/', UserProfilePasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', UserProfilePasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset/done/', UserProfilePasswordResetCompleteView.as_view(), name='password_reset_complete'),    
     path('account/', UserProfileView.as_view(), name='user_profile'),
     path('two-fa-register-page/', Set2FAView.as_view()),
     path('verify-two-factor-auth/', Verify2FAView.as_view(), name='Verify2FAView'),
@@ -118,4 +123,5 @@ urlpatterns = [
     path('api/whois/<pk>', whoisRetrieveViewSet.as_view()),
     path('api/EGOAgent/', EGOAgentListCreateView.as_view(), name='EGOAgent'),
     path('api/EGOAgent/<pk>/', EGOAgentRetrieveUpdateDestroyView.as_view(), name='EGOAgentpk'),    
+    
 ]

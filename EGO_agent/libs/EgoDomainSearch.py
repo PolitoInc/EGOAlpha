@@ -127,8 +127,6 @@ class EgoDomainSearch:
         print('crtsh_com_search',data)
         domain_set= DomainNameValidation.CREATOR(data)
         domainname= domain_set['domainname']
-        print('domainname',domainname)
-        print('SCOPED', SCOPED)
         try:
             if type(domain_set) is None:
                 return False
@@ -139,19 +137,16 @@ class EgoDomainSearch:
                     Dic= {}
                     suffixList= set()
                     subdomainList=set()
-                    print('DOMAIN IN SCOPED crtsh', domainname)
                     Global_Nuclei_CoolDown=(30,50)
                     Sleep_Generator = round(random.uniform(Global_Nuclei_CoolDown[0], Global_Nuclei_CoolDown[1]), 2)
                     time.sleep(Sleep_Generator)
                     url = (f"https://crt.sh/?q={domainname}&output=json")
                     r = requests.get(url, allow_redirects=True, verify=True, timeout=60)
-                    
                     status = r.status_code
-                    print(status)
                     rson = r.json()
                     time.sleep(2)
                     if status != 200:
-                        print(f'{url}, crtsh has enabled rate limiting, begining cooldown process.{status}')
+                        
                         time.sleep(500)
                         return False
                     else:
@@ -159,14 +154,13 @@ class EgoDomainSearch:
                             listed_rson = ([x["name_value"].split() for x in rson])
                             for listed in listed_rson:
                                 i= listed[0]
-                                print(f'dict or list should be dict 0 {i} should be out of nested list{listed}')
+                                
                                 domain_set= DomainNameValidation.CREATOR(i)
                                 domainname= domain_set['domainname']
                                 fulldomain= domain_set['fulldomain']
                                 sub= domain_set['SUBDOMAIN']
                                 suf= domain_set['SUFFIX']
                                 if domainname not in SCOPED['SCOPED_set_domain']: 
-                                    print(f"domainname not in scope  {domain_set['DOMAIN']}    {SCOPED}")
                                     OOS.add(domain_set['fulldomain'])
                                     pass
                                 else:

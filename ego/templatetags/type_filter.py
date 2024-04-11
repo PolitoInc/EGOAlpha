@@ -14,4 +14,3 @@ def get_item(dictionary, key):
 def in_list(value, list_string):
     return str(value) in list_string.split(',')
 
-

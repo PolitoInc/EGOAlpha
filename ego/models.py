@@ -9,7 +9,7 @@ from django.contrib.postgres.fields import JSONField
 from django.conf import settings
 from django.conf.urls.static import static
 from django.db.models.signals import post_save
-from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib.auth.models import AbstractUser, Group, Permission, ContentType
 
 from rest_framework.authtoken.models import Token
 from django.db.models.signals import pre_save
@@ -23,7 +23,6 @@ from django.db import models
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-from django.contrib.auth.models import Group, ContentType, Permission
 from django.contrib.auth.hashers import make_password
 from django.conf import settings
 from django.db.models.signals import post_save
@@ -35,10 +34,10 @@ from django.contrib.auth.models import User, Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+
 class Tenant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -52,7 +51,7 @@ class UserProfile(models.Model):
     ]
     role = models.CharField(max_length=5, choices=ROLE_CHOICES, default='READ')
     email_invite_code = models.CharField(max_length=100, null=True, blank=True)
-    
+
 class GroupInvitation(models.Model):
     email = models.EmailField(max_length=254)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
@@ -69,7 +68,7 @@ class GroupInvitation(models.Model):
         if not self.pk:  # if this is a new object
             self.invited_by = self.group.user_set.first()  # set invited_by to the first user in the group
         super().save(*args, **kwargs)
-    
+
 class UserGroup(models.Model):
     users = models.ManyToManyField(UserProfile, related_name='user_groups')
     group = models.ForeignKey(GroupInvitation, on_delete=models.CASCADE, related_name='user_groups')
@@ -112,10 +111,11 @@ class EGOAgent(models.Model):
     hostLocation = models.CharField(max_length=256, blank=True)
     lastConnect = models.DateField()
     callBackTime = models.IntegerField(default='30')
-    alive = models.BooleanField(default='False')
-    scanning = models.BooleanField(default='False')
     bearer_token = models.CharField(max_length=500, blank=True)
-    
+    checkin = models.DateTimeField(blank=True, null=True)
+    sleep = models.BooleanField(default='False')
+    alive = models.BooleanField(default='False')
+    scanning = models.BooleanField(default='False')    
 
 def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
@@ -297,7 +297,8 @@ class GnawControl(BaseModel):
     Gnaw_Completed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">Used to scan all customers.</fieldset>')
     failed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">An exception occured.</fieldset>')
     scan_objects = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
-
+    scannedHost = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
+    
 class EgoControl(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ScanProjectByID = models.CharField(max_length = 75, blank=True, help_text='<fieldset style="background-color: lightblue;display: inline-block;">The uniquic identifier stirng assigned to id Objects.</fieldset>')

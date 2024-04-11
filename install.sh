@@ -55,3 +55,6 @@ read new_secret_code
 sed -i "s/expected_secret_code = .*/expected_secret_code = '$new_secret_code'/" /ego/views.py
 
 python3 manage.py collectstatic
+
+sudo apt-get install mailutils
+sudo apt-get install postfix dovecot-imapd dovecot-pop3d

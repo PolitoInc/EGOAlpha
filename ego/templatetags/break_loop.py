@@ -10,3 +10,13 @@ def get_first(value):
                 if isinstance(sub_values, list) and sub_values and isinstance(sub_values[0], dict):
                     return sub_values[0].keys()
     return []
+
+@register.filter
+def get_not_first(value):
+    for sub_value in value:
+        for sub_keys, sub_values in sub_value.items():
+            if sub_keys in ["domainname", "subDomain", "dateCreated", "lastScan", "skipScan", "alive","nucleiBool","ip",
+                                "Ipv6Scope","OpenPorts","CertBool","CMS","ASN","Images"] and sub_values:
+                if isinstance(sub_values, list) and sub_values and isinstance(sub_values[0], dict):
+                    return sub_values[0].keys()
+    return []

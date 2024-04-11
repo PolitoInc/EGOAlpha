@@ -165,7 +165,6 @@ def Ego(username, password):
                     pass
                 else:
                     SET = response
-                    
                     customerId= response['ScanProjectByID']
                     scanPRojectgroup= response['ScanGroupingProject']
                     scanProjectName = response['ScanProjectByName']
@@ -177,12 +176,10 @@ def Ego(username, password):
                     HostAddress = response['HostAddress']
                     passiveAttack = response['passiveAttack']
                     agressiveAttack = response['agressiveAttack']
-                    
                     portscan_bool = response['portscan_bool']
                     versionscan_bool = response['versionscan_bool']
                     Scan_Scope_bool = response['Scan_Scope_bool']
                     scan_records_BruteForce = response['BruteForce']
-                    
                     Scan_IPV_Scope_bool = response['Scan_IPV_Scope_bool']
                     Scan_DomainName_Scope_bool = response['Scan_DomainName_Scope_bool']
                     scan_records_censys=  response['scan_records_censys']
@@ -204,13 +201,7 @@ def Ego(username, password):
                     else:
                         Worddsresults = []
                     print('WorddsresultsWorddsresultsWorddsresults', Worddsresults)
-                    try:
-                        EgoReconScan_object = response['EgoReconScan']
-                    except:
-                        EgoReconScan_object = False
-                    if EgoReconScan_object == True:
-                        pass
-                    elif LoopCustomersBool == True:
+                    if LoopCustomersBool == True:
                         print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
                         LoopCustomers= f"{HostAddress}:{Port}/api/customers/"
                         headers.update(auth_token_json)

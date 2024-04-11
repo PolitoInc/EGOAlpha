@@ -27,7 +27,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 SECRET_KEY = ';;F@?UcdupcVfgxy~1E9esJMqz,U0z?!AX566!Q7x%G0!ia.RJ'
 
 # SECURITY WARNING: don't run upcVfgxy~1E9esJMqz,U0z?with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 DATA_UPLOAD_MAX_MEMORY_SIZE	= 17179869184
@@ -92,15 +92,30 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/Customers/'
 LOGOUT_REDIRECT_URL = '/login/'
 
+# settings.py
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'charlesmcgowen@gmail.com'  # Replace with your Gmail address
+EMAIL_HOST_PASSWORD = '%;RXutV\'"0n6G+AY'  # Replace with your Gmail password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'test',
+        'NAME': 'cat',
         'USER': 'postgres',
-        'PASSWORD': 'test',
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -146,7 +161,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, '/static'),
 ]
 
 

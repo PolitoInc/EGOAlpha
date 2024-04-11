@@ -32,7 +32,7 @@ from selenium.webdriver.chrome.options import Options
 
 import EgoSettings
 seen = []
-print('{EgoSettings.dump}', f'{EgoSettings.dump}/libs/pyasn/data/ipsn_db_file_name.dat')
+print(f'{EgoSettings.dump}', f'{EgoSettings.dump}/libs/pyasn/data/ipsn_db_file_name.dat')
 if str(os.name) == 'nt':
     asndb = pyasn.pyasn(r'.\pyasn\data\ipsn_db_file_name.dat')
 else:
@@ -323,7 +323,7 @@ class EgoReconFunc:
                     if compareBoolLoop:
                         headers = {"Content-type": "application/json", "Accept": "application/json"}
                         url = f"https://{fqdn}"
-                        bad_content = ["subdomain.com", "Copyright © 2023 Subdomain.com. All Rights Reserved."]
+                        bad_content = ["subdomain.com", "Copyright \u00A9 2023 Subdomain.com. All Rights Reserved."]
                         try:
                             ip = requests.get(url, verify=False, allow_redirects=True, timeout=1)
                             text = ip.text
@@ -560,6 +560,7 @@ class EgoCert:
      
     def certRipper(data,SET=None, SCOPED=None, Customer_key=None, portscan_bool=None, versionscan_bool=None, CoolDown_Between_Queries=None, HostAddress=None, Port=None, auth_token_json=None):
         # data is a dictionary
+        print('certRippercertRipper3certRipper3certRipperce3rtRippe3rcertRipper3certRipp3ercertRippe3rcert3RippercertRi3pper')
         KeyAlive= ['CertBool']
         try:
             if data:
@@ -622,6 +623,8 @@ class EgoCert:
                 DIC.update(results)
                 return DIC
         except Exception as E:
+            print('certRipper')
+            print(E)
             results= dict.fromkeys(KeyAlive,False)
             DIC.update(results)
             return DIC
@@ -671,9 +674,11 @@ class ToolBox:
             return False  
         
     def GeoCodes(values, record_id,  HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, auth_token_json=None):
+        time.sleep(2)
         if type(values) is list:
             for value in values:
                 try:
+                    
                     response = DbIpCity.get(value, api_key='free')
                     responsejson = json.loads(response.to_json())
                     responsejson.update({"latitude": f"{responsejson['latitude']}"})
@@ -1237,25 +1242,32 @@ class ToolBox:
                                             DIC_headers.update(auth_token_json)
                                         responseRecords = requests.post(urlPost, data=recs, headers=DIC_headers,verify=False)
                                         jsonresponseRecords = responseRecords.json()
-                                    
                                         try:
-                                            toscan = DIC.get('ip')
-                                            dnsquery= EgoDns.Dns_Resolver(jsonresponseRecords, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json ) 
-                                            ToolBox.MantisRequester(toscan[0], jsonresponseRecords['id'], SET=SET, Customer_key=Customer_key, SCOPED=SCOPED, path=None, method='GET', HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json,CoolDown_Between_Queries=CoolDown_Between_Queries)
-                                            ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'], HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+                                            ToolBox.MantisRequester(FullDomainName, jsonresponseRecords['id'], SET=SET, Customer_key=Customer_key, SCOPED=SCOPED, path=None, method='GET', HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json, CoolDown_Between_Queries=CoolDown_Between_Queries)
+                                                
                                         except Exception as E:
-                                            print(E)
-                                            pass
+                                            continue
+                                        try:
+                                            dnsquery= EgoDns.Dns_Resolver(jsonresponseRecords, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)                                            
+                                        except Exception as E:
+                                            continue
+                                        #try:
+                                        #    #ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'],  HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+                                        #except Exception as E:
+                                        #    pass 
                                         status = responseRecords.status_code
                                         if status != 201:
+                                            print('201nmap')
                                             pass
                                         elif "record with this already exists." in responseRecords:
+                                            print('record with this already exists.')
                                             pass
                                         else:
                                             #nmap
                                             portscan_bool = False
                                             versionscan_bool_before_version = True
-                                            nmap_scan=  EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
+                                            print('333333333333333333333333versionscan_bool_before_version3333333333333333333333333333333')
+                                            nmap_scan=  EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool_before_version, auth_token_json=auth_token_json )
                                             #dns
                                             jsonresponseRecords_id= jsonresponseRecords['id']
 
@@ -1288,6 +1300,7 @@ class ToolBox:
                                                 responseRecords = json.loads(postRecords.text)
                                                 return True
                                     else:
+                                        print('fffffffffff4444444444versionscan_bool4444444ffffffffffffffffffffff')
                                         cert= EgoCert.certRipper(DIC, SET=SET, portscan_bool=portscan_bool, versionscan_bool=versionscan_bool, CoolDown_Between_Queries=CoolDown_Between_Queries , SCOPED=SCOPED, Customer_key=Customer_key, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                                         CertBool= cert['CertBool']
                                     
@@ -1321,21 +1334,30 @@ class ToolBox:
                                             jsonresponseRecords = json.loads(responseRecords.content)
                                             status = responseRecords.status_code
                                             try:
-                                                dnsquery= EgoDns.Dns_Resolver(jsonresponseRecords, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                                                 ToolBox.MantisRequester(FullDomainName, jsonresponseRecords['id'], SET=SET, Customer_key=Customer_key, SCOPED=SCOPED, path=None, method='GET', HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json, CoolDown_Between_Queries=CoolDown_Between_Queries)
-                                                ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'],  HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+                                                
                                             except Exception as E:
                                                 pass
-
+                                            try:
+                                                dnsquery= EgoDns.Dns_Resolver(jsonresponseRecords, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)                                            
+                                            except Exception as E:
+                                                pass
+                                            #try:
+                                                #ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'],  HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+                                            #except Exception as E:
+                                            #    pass                                            
                                             versionscan_bool_before_version = False
                                             #nmap
                                             portscan_bool = False
                                             versionscan_bool_before_version = True
-                                            nmap_scan= EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
+                                            print('versionscan_bool_before_versionversionscan_bgol_before_versionversionscan_bool_gefore_versionversignscan_bool_before_version')
+                                            nmap_scan= EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool_before_version, auth_token_json=auth_token_json )
                                             #dns
+                                            print('dnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdnsdns')
                                             jsonresponseRecords_id= jsonresponseRecords['id']
                                             dns_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
                                             subDomain.update(dns_id)
+                                            print('dnsupdatednsupdatednsupdatednsupdatednsupdatednsupdatednsupdatednsupdatednsupdatednsupdatednsupdate')
                                             portscan_bool_temp = False
                                             # cerrt
                                             if CertBool != False:
@@ -1396,10 +1418,14 @@ class ToolBox:
                                     if nmap_scan is None:
                                         pass
                                     else:
-
+                                        
                                         DIC.update(nmap_scan)
+                                        print('4444444444444ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
                                         cert= EgoCert.certRipper(DIC, SET=SET, portscan_bool=portscan_bool, versionscan_bool=versionscan_bool, CoolDown_Between_Queries=CoolDown_Between_Queries ,Customer_key=Customer_key, SCOPED=SCOPED, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                                         if cert == 'None' or type(cert) is None:
+                                            print('certNonecertNonecertNonecertNonecertNonecertNonecertNonecertNonecertNonecertNone')
+                                            print('certNonecertNonecertNonecertNonecertNonecertNonecertNonecertNonecertNonecertNone')
+                                            print('certNonecertNonecertNonecertNonecertNonecertNonecertNonecertNonecertNonecertNone')
                                             pass
                                         else:
                                             #check for certificate records before attempting to append them
@@ -1408,6 +1434,7 @@ class ToolBox:
                                             #except:
                                             #    CertificateBool= False
                                             # value given by the certripper function
+                                      
                                             CertBool= cert['CertBool']
                                             CertBool_set= dict.fromkeys(['CertBool'], CertBool)
                                             DIC.update(CertBool_set)
@@ -1430,7 +1457,7 @@ class ToolBox:
                                                 asn = asn_store
                                             else:
                                                 asn = ToolBox.ASN(ipDIC)
-
+ 
 
                                             if asn == False:
                                                 asnDict = dict.fromkeys(["ASN"], [])
@@ -1447,46 +1474,60 @@ class ToolBox:
                                             status = postRecords.status_code
 
                                             try:
-                                                dnsquery= EgoDns.Dns_Resolver(jsonresponseRecords, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
-                                                ToolBox.MantisRequester(FullDomainName, jsonresponseRecords['id'], SET=SET, Customer_key=Customer_key, SCOPED=SCOPED, path=None, method='GET', HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json,CoolDown_Between_Queries=CoolDown_Between_Queries)
-                                                ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'],  HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+                                                ToolBox.MantisRequester(FullDomainName, jsonresponseRecords['id'], SET=SET, Customer_key=Customer_key, SCOPED=SCOPED, path=None, method='GET', HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json, CoolDown_Between_Queries=CoolDown_Between_Queries)
+                                                
                                             except Exception as E:
                                                 pass
+                                            try:
+                                                dnsquery= EgoDns.Dns_Resolver(jsonresponseRecords, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)                                            
+                                            except Exception as E:
+                                                pass
+                                            #try:
+                                            #    ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'],  HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+                                            #except Exception as E:
+                                            #    pass                
 
                                             if status != 201:
+                                                print('nmap 201')
                                                 pass
                                             elif "record with this subDomain already exists." in responseRecords:
+                                                print("record with this subDomain already exists.")
                                                 pass
                                             else:
                                                 #nmap
                                                 portscan_bool = False
                                                 versionscan_bool_before_version = True
-                                                nmap_scan= EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
-                                                #dns
-                                                jsonresponseRecords_id= jsonresponseRecords['id']
-                                                dns_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
-                                                subDomain.update(dns_id)
-                                                portscan_bool_temp = False
-                                                # cerrt
+                                                nmap_scan= EgoNmap.NmapScan(jsonresponseRecords, portscan_bool, versionscan_bool_before_version, auth_token_json=auth_token_json )
+                                                
                                                 if CertBool != False:
                                                     jsonresponseRecords_id= jsonresponseRecords['id']
                                                     certificate_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
+                                                    print('certcertcertcertcertcertcertcertcertcertcertcertcertcertcertcertcertcertcertcertcertcertcertc')
                                                     Certificate_= cert['Certificate']
                                                     certificate_id.update(Certificate_) 
                                                     md5_hash = hashlib.md5(json.dumps(certificate_id, sort_keys=True).encode('utf-8')).hexdigest()
                                                     results = dict.fromkeys(['md5'],md5_hash)
                                                     certificate_id.update(results)
                                                     recs= json.dumps(certificate_id)
-                                                    certificateurlPost= f"{EgoSettings.HostAddress}:{Port}/api/Certificate/create/"
+                                                    print('certificatecertificatecertificatecertificatecertificate')
+                                                    print('certificatecertificatecertificatecertificatecertificate')
+                                                    print('certificatecertificatecertificatecertificatecertificate')
+                                                    print('certificatecertificatecertificatecertificatecertificate')                                                         
+                                                    certificateurlPost= f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/Certificate/create/"
                                                     DIC_headers = {}
-    
+                                                    print('certificateurlPostcertificateurlPostcertificateurlPost', certificateurlPost)
                                                     #DIC_headers.update(auth_token_json)
                                                     DIC_headers.update(headers)
                                                     if bool(auth_token_json):
                                                         DIC_headers.update(auth_token_json)
                                                     postRecords = requests.post(certificateurlPost, data=(recs), headers=DIC_headers,verify=False)
                                                     responseRecords = json.loads(postRecords.text)
-                                                    return(f'responseRecords       {responseRecords}')
+                                                    return(f'responseRecords    certcertcertcertcertcertcertcertcertcertcertcertcertcertcert   {responseRecords}')
+                                                #dns
+                                                jsonresponseRecords_id= jsonresponseRecords['id']
+                                                dns_id= dict.fromkeys(['record_id'], jsonresponseRecords_id)
+                                                subDomain.update(dns_id)
+                                                portscan_bool_temp = False                                                
                     elif type(a) is dict:
                         subDomain= a['subDomain']
                         ports= a['OpenPorts']
@@ -1535,13 +1576,13 @@ class ToolBox:
 
                             ToolBox.MantisRequester(FullDomainName, jsonresponseRecords['id'], SET=SET, Customer_key=Customer_key, SCOPED=SCOPED, path=None, method='GET', HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json,CoolDown_Between_Queries=CoolDown_Between_Queries)
                             dnsquery= EgoDns.Dns_Resolver(jsonresponseRecords, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
-                            ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'],  HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
+                            #ToolBox.GeoCodes(DIC['ip'], jsonresponseRecords['id'],  HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
                             portscan_bool = False
                             versionscan_bool_before_version = True
-                            nmap_scan= EgoNmap.NmapScan(a, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
+                            nmap_scan= EgoNmap.NmapScan(a, portscan_bool, versionscan_bool_before_version, auth_token_json=auth_token_json )
                             portscan_bool = True
                             versionscan_bool_before_version = False
-                            nmap_scan= EgoNmap.NmapScan(a, portscan_bool, versionscan_bool, auth_token_json=auth_token_json )
+                            nmap_scan= EgoNmap.NmapScan(a, portscan_bool, versionscan_bool_before_version, auth_token_json=auth_token_json )
                         except Exception as E:
                             pass                       
                         cert= EgoCert.certRipper(FullDomainName, SET=SET, portscan_bool=portscan_bool, versionscan_bool=versionscan_bool, CoolDown_Between_Queries=CoolDown_Between_Queries ,Customer_key=Customer_key, SCOPED=SCOPED, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json) 

@@ -484,8 +484,9 @@ def process_nuclei_results(nuclei_results, record_id, HostAddress, Port, auth_to
             nuclei_brain = brain_word_comprehension(nuclei_result, record_id, HostAddress=HostAddress, Port=Port, auth_token_json=auth_token_json)
     return True
 
-def nuclei_func(domain, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=False, auth_token_json=None):
+def nuclei_func(domain, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=False, auth_token_json=None):
     try:
+        update_gnaw_control(domain['subDomain'], ego_id, auth_token_json)
         record_id = domain['id']
         alive = domain["alive"]
         p = domain['subDomain']
@@ -552,7 +553,6 @@ def Chunky(lst, num_chunks):
     remainder = len(lst) % num_chunks
     return [lst[i * avg + min(i, remainder):(i + 1) * avg + min(i + 1, remainder)] for i in range(num_chunks)]
 
-
 def get_auth_token():
     urlLogin = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/login"
     headers = {"Content-type": "application/json", "Accept": "application/json"}
@@ -580,34 +580,45 @@ def create_EGOAgent(data, auth_token_json):
     response = requests.post(url, data=json.dumps(data), headers=headers, verify=False)
     return response.json()
 
+def update_agent_checkin(agent_id, auth_token_json):
+    # Prepare the URL and headers
+    url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/EGOAgent/{agent_id}/"
+    headers = {"Content-type": "application/json", "Accept": "application/json"}
+    if auth_token_json:
+        headers.update(auth_token_json)
+    # Prepare the data with the current date and time
+    dt = datetime.datetime.now()
+    data = {"checkin": dt.strftime('%Y-%m-%d %H:%M:%S')}
+    # Send the PATCH request
+    response = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
+    return response.json()
+
 def update_AgentControl(ego_id, agent_id, auth_token_json):
     # Get the current list of UUIDs in the 'egoAgent' field
     headers = {"Content-type": "application/json", "Accept": "application/json"}
     headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleeWbKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"})
     if auth_token_json:
         headers.update(auth_token_json)
-
     # Update the 'egoAgent' field with the new list
     url_patch = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
     data = {
         'egoAgentID': agent_id,
     }
-
     rjson = json.dumps(data)
-    print('rjson',rjson)
     response_patch = requests.patch(url_patch, data=rjson, headers=headers, verify=False)
     return response_patch
 
-
-
-def worker_func(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=False, auth_token_json=None): 
-    print('here2', record['subDomain'])
-    return nuclei_func(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=HostAddress, Port=Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json) 
+def worker_func(records, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=False, auth_token_json=None): 
+    # Update GnawControl with the subDomain
+    outStore = []
+    for record in records:
+        out = nuclei_func(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=HostAddress, Port=Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json) 
+        outStore.append(out)
+    return outStore
 
 def register_and_update_agent(auth_token_json=None):
     Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/"
     request = get_request(Url_EgoControls, auth_token_json)
-    print(request.status_code)
     responses = request.json()
     response_store = []
     agent_response_store = []
@@ -647,15 +658,37 @@ def register_and_update_agent(auth_token_json=None):
                 agent_response_store.append(agent_response)
     return response_store, agent_response_store
 
+def update_gnaw_control(sub_domain, ego_id, auth_token_json):
+    try:
+        # Prepare the URL and headers
+        url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
+        headers = {"Content-type": "application/json", "Accept": "application/json"}
+        if auth_token_json:
+            headers.update(auth_token_json)
+        # Prepare the data with the scannedHost and anotherField
+        data = {"scannedHost": sub_domain}
+        # Send the PATCH request
+        response = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
+    except Exception as E:
+        print('Exception')
+        print(E)
 
 
 def gnaw():
+    # Check for new items to scan
     cpuCount = round(os.cpu_count())
     print(f'cpu {cpuCount}')
     auth_token_json = {"Authorization": f"Bearer {EgoSettings.api_accessKey}"}
     responseEgo, responseAgent = register_and_update_agent(auth_token_json)
     print('responseEgo',responseEgo)
     print('responseAgent',responseAgent)
+    # After registering and updating the agent
+    agent_id = EgoSettings.egoAgent
+# Update the agent's checkin    
+    print('update_agent_checkin')
+    update_agent_checkin(agent_id, auth_token_json)
+    print('update_agent_checkin2')
+    time.sleep(15)    
     responseEgo = responseEgo
     if responseEgo is None:
         print("No empty egoAgent found.")
@@ -732,31 +765,32 @@ def gnaw():
                                     continue
                                 else:
                                     RecordsCheck_chunks2 = Chunky(RecordsStore, Record_chunk_size)
-                                    BoneGnaw= []
-                                    for RecordsChecks in RecordsCheck_chunks2:
-                                        for RecordsCheck in RecordsChecks:
-                                            id = RecordsCheck.get('id')
-                                            created_date = RecordsCheck.get('created_date')
-                                            LastScanned = RecordsCheck.get('LastScanned')
-                                            SkipScan = RecordsCheck.get('skipScan')
-                                            BoolSkipScan = DATEREADER(created_date, LastScanned)
-                                            BoolSkipScan = True
-                                            if SkipScan == True:
-                                                print('SkipScan', SkipScan)
-                                                continue
-                                            elif BoolSkipScan == False:
-                                                continue
-                                            else:
-                                                Bool_Start_chunk_timeout =+ True
-                                                # Create a list of delayed computations
-                                                computations = dask.delayed(worker_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json)
-
-                                                # Compute the computations in parallel
-                                                Nuke_responses = dask.compute(*computations, scheduler='threads', num_workers=len(RecordsCheck_chunks))                                            
-                                                BoneGnaw.append(Nuke_responses)
-                                                url= f"{HostAddress}:{Port}/api/records/{id}"
-                                                data = {"lastScan": datetime.datetime.now()}
-                                                #resp = requests.patch(url=url, data=data, headers=headers )
+                                    Store= []
+                                    for RecordsCheck in RecordsCheck_chunks:
+                                        if OutOfScopeString is None:
+                            
+                                            computations = [dask.delayed(worker_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json)]
+                                            Store.extend(computations)
+                                        elif OutOfScopeString not in RecordsCheck['subDomain']:
+                                            print(RecordsCheck['subDomain'])
+                                            continue
+                                        else:
+                                            computations = [dask.delayed(worker_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json)]
+                                            Store.extend(computations)
+                                        BoneGnaw.append(Store)
+                                    # Compute all the delayed computations in parallel
+                                    Nuke_responses = dask.compute(*Store, scheduler='threads', num_workers=workers)
+                                    BoneGnaw.append(Nuke_responses)
+                                    gnaw_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{response['id']}"
+                                    print(f"going to update gnawcontrols the task has been complete")
+                                    dataPUt = {"Gnaw_Completed": True}
+                                    recs = json.dumps(dataPUt)
+    
+                                    headers = {"Content-type": "application/json", "Accept": "application/json"}
+                                    if auth_token_json:
+                                        headers.update(auth_token_json)
+                                    request = requests.patch(gnaw_url, data=recs, headers=headers, verify=False)
+                                    response = request.json()          
                             else:
                                 print(gnawTarget == gnawTargets)
                     Nuke_responses = dask.compute(*BoneGnaw, scheduler='threads', num_workers=cpuCount)
@@ -786,15 +820,16 @@ def gnaw():
                     print('count', len(RecordsCheck))
                     print('Record_chunk_size', Record_chunk_size)                
                     Store= []
-                    for RecordsChecks in RecordsCheck_chunks:
+                    for RecordsCheck in RecordsCheck_chunks:
                         if OutOfScopeString is None:
-                            computations = [dask.delayed(worker_func)(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json) for record in RecordsChecks]
+                            
+                            computations = [dask.delayed(worker_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json)]
                             Store.extend(computations)
                         elif OutOfScopeString not in RecordsCheck['subDomain']:
                             print(RecordsCheck['subDomain'])
                             continue
                         else:
-                            computations = [dask.delayed(worker_func)(record, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json) for record in RecordsChecks]
+                            computations = [dask.delayed(worker_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json)]
                             Store.extend(computations)
                         BoneGnaw.append(Store)
                     # Compute all the delayed computations in parallel
@@ -828,21 +863,31 @@ def gnaw():
         Nuke_responses=NukeOut
         print(f'GNAW IS COMPLETE {Nuke_responses}')         
 
+        # Prepare the URL and headers
+        url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/EGOAgent/{agent_id}/"
+        headers = {"Content-type": "application/json", "Accept": "application/json"}
+        if auth_token_json:
+            headers.update(auth_token_json)
+
+        # Prepare the data with the scanning status
+        data = {"scanning": False}
+
+        # Send the PATCH request
+        response = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
         print('done record ')
 
 
 if __name__ == "__main__":
+    counter = 0
     while True:
-        r4sults=gnaw()
-        print(f"sleeping 30 zzzzzzz")
-        time.sleep(30)
-        
-
-    
-
-
-
-    #    Nuke_responses= dask.compute(*BoneGnaw, scheduler='distributed')
-    #print('BoneGnaw', BoneGnaw)
-    #print('BoneGnaw Nuke_responses', Nuke_responses)
-    #print('failed here 0')
+        print('sss')
+        print('sss')
+        gnaw()
+        counter += 1
+        if counter == 3:
+            print('sleeping for 5 minutes...')
+            time.sleep(300)  # sleep for 5 minutes
+            counter = 0  # reset the counter
+        else:
+            print('sleeping 30 seconds...')
+            time.sleep(30)

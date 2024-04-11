@@ -418,3 +418,13 @@
     color: black;
     text-shadow: none;
 }
+
+.product-link {
+    font-weight:bold;
+    font-size: 17px; /* Increase the font size */
+    transition: transform 0.3s ease-in-out; /* Add a transition effect */
+}
+
+.product-link:hover {
+    transform: scale(0.75); /* Shrink the link to 75% of its original size on hover */
+}
