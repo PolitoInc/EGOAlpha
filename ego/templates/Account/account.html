@@ -26,15 +26,15 @@
     <h2>Group Invitation</h2>
     <form method="POST">
     {% csrf_token %}
-      {{ group_invitation_form.as_p }}
+      {{ tenant_invitation_form.as_p }}
       <button type="submit">Invite</button>
     </form>
   </div>
   <div>
-<h2>Group Membership</h2>
+    <h2>Group Membership</h2>
 	<ul>
-	  {% for group in user_groups %}
-		<li>{{ group.name }}</li>
+	  {% for group in tenant_invitations %}
+		<li>{{ group.email }}</li>
 	  {% endfor %}
 	</ul>
     </div>

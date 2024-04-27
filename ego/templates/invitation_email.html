@@ -1,0 +1,10 @@
+{% autoescape off %}
+Hi {{ user.username }},
+
+You're invited to join our tenant. Please click the link below to join:
+
+{{ protocol }}://{{ domain }}{% url 'invitation_view' uidb64=uid token=token %}
+
+Thanks,
+Your Team
+{% endautoescape %}

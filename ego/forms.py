@@ -13,7 +13,6 @@ import uuid
 from ego.models import * 
 from ego.serializers import *
 
-
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
@@ -24,9 +23,9 @@ class AdminUserProfileForm(forms.ModelForm):
         model = UserProfile
         fields = ['email', 'role']
 
-class GroupInvitationForm(forms.ModelForm):
+class TenantInvitationForm(forms.ModelForm):
     class Meta:
-        model = GroupInvitation
+        model = TenantInvitation
         fields = ['email', 'role']
 
 class EGOAgentForm(forms.ModelForm):

@@ -18,20 +18,28 @@ import pycountry
 import tldextract
 from django import VERSION
 from django.conf import settings
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth.models import ContentType, Group
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, PasswordResetForm, SetPasswordForm
+from django.contrib.auth.models import ContentType, Group, User
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseServerError, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views import View, generic
 from django.views.decorators.csrf import csrf_exempt
 from django_otp.plugins.otp_static.models import StaticDevice as PhoneDevice
@@ -40,7 +48,7 @@ from ego.authentication import *
 from ego.forms import *
 from ego.models import *
 from ego.serializers import *
-from ego.services import *
+from ego.services import login_user_service
 from fuzzywuzzy import fuzz, process
 from geopy.geocoders import Nominatim
 from rest_framework.authentication import TokenAuthentication
@@ -51,19 +59,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
 from rest_framework.views import APIView
-from django.contrib.auth import get_user_model
-from django.views import generic
-from django.http import HttpResponse
 from twilio.twiml.messaging_response import MessagingResponse
-from django.core.mail import send_mail
-from django.contrib.sites.shortcuts import get_current_site
-from django.db import transaction
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
-from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
-
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from .mixins import RoleRequiredMixin
 
 class UserProfilePasswordResetForm(PasswordResetForm):
     def get_users(self, email):
@@ -109,59 +106,75 @@ class UserProfileView(View):
             user_profile = get_object_or_404(UserProfile, user=request.user)
             if user_profile.role == 'ADMIN':
                 form = AdminUserProfileForm(instance=user_profile)
-                group_invitation_form = GroupInvitationForm()
+                tenant_invitation_form = TenantInvitationForm()
                 # Query all users in the admin group
                 admin_users = UserProfile.objects.filter(role='ADMIN')
                 # Query all group invitations
-                group_invitations = GroupInvitation.objects.all()
+                tenant_invitations = TenantInvitation.objects.all()
             else:
                 form = UserProfileForm(instance=user_profile)
-                group_invitation_form = None
+                tenant_invitation_form =  TenantInvitationForm()
                 admin_users = None
-                group_invitations = None
+                tenant_invitations = None
             return TemplateResponse(request, 'Account/account.html', {
                 'form': form, 
-                'group_invitation_form': group_invitation_form,
+                'tenant_invitation_form': tenant_invitation_form,
                 'admin_users': admin_users,
-                'group_invitations': group_invitations
+                'tenant_invitations': tenant_invitations
             })
         else:
             return HttpResponseRedirect(reverse_lazy('login'))
         
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        
         user_profile = get_object_or_404(UserProfile, user=request.user)
-        form = UserProfileForm(request.POST, instance=user_profile)
-        group_invitation_form = None
+        tenant_invitation_form = None
         if user_profile.role == 'ADMIN':
-            form = AdminUserProfileForm(request.POST, instance=user_profile)
-            group_invitation_form = GroupInvitationForm(request.POST)
-            if group_invitation_form.is_valid():
-                group_invitation = group_invitation_form.save()
-                user_group = UserGroup.objects.create(group=group_invitation)
-                user_group.users.add(user_profile)
-                UserProfile.objects.create(user=group_invitation.invited_user, role='READ')
+            tenant_invitation_form = TenantInvitationForm(request.POST)  # Assuming you have a TenantInvitationForm
+            if tenant_invitation_form.is_valid():
+                tenant_invitation = tenant_invitation_form.save(commit=False)  # Don't save the TenantInvitation instance yet
+                tenant_invitation.tenant = user_profile.tenant  # Set the tenant field to the tenant of the user who is creating the invitation
+                tenant_invitation.save()  # Now save the TenantInvitation instance
+
+                user_group = UserGroup()
+                user_group.group_id = tenant_invitation.id  # Assign the id of the tenant_invitation, not the object itself
+                user_group.save()
+
+                user_group.users.add(user_profile)  # add the UserProfile instance to the users ManyToManyField
+                user_group.save()
+
+                tenant = tenant_invitation.tenant  # assuming 'tenant' is a property of TenantInvitation
+
                 # Get the current site (domain)
                 current_site = get_current_site(request)
-                print(current_site)
-                # Create the invitation URL
-                invitation_url = f"http://{current_site.domain}{reverse('invitation_view', kwargs={'invite_code': group_invitation.invite_code})}"
-                print(invitation_url)
+                # Generate a token with the user's information
+                token = default_token_generator.make_token(user_profile.user)
+                uid = urlsafe_base64_encode(force_bytes(user_profile.user.pk))
+
+                invitation_url = f"http://{current_site.domain}{reverse('invitation_view', kwargs={'uidb64': uid, 'token': token})}"
+
+                # Create the email message
+                message = render_to_string('invitation_email.html', {
+                    'user': user_profile.user,
+                    'domain': current_site.domain,
+                    'uid': uid,
+                    'token': token,
+                })
                 # Send the email
                 send_mail(
-                    'You are invited to join our group',
-                    f'Please click the following link to join our group: {invitation_url}',
+                    'You are invited to join our tenant',
+                    message,
                     'from@example.com',
-                    [group_invitation.email],
+                    [tenant_invitation.email],
                     fail_silently=False,
                 )
-        else:
-            if form.is_valid():
-                form.save()
                 return HttpResponseRedirect(reverse_lazy('user_profile'))
             else:
-                return TemplateResponse(request, 'Account/account.html', {'form': form, 'group_invitation_form': group_invitation_form})
-            
+                return TemplateResponse(request, 'Account/account.html', {'tenant_invitation_form': tenant_invitation_form})
+        else:
+            return HttpResponseForbidden("You are not authorized to perform this action.")
+
 class Set2FAView(generic.CreateView):
     """
     Get the image of the QR Code
@@ -248,67 +261,94 @@ class Verify2FAView(APIView):
         return HttpResponseRedirect('/Customers/')
 
 #registration
-from ego.services import login_user_service
-from django.contrib.auth import login
-from ego.models import UserProfile  # Import the UserProfile model
 
+
+@login_required
+@permission_required('app.add_item', raise_exception=True)
 def register(request):
+    
     if request.method == 'POST':
-        secret_code = request.POST.get('secret_code', None)
-        if secret_code != 'expected_secret_code':  # Replace 'expected_secret_code' with the actual secret code
-            messages.error(request, 'Registration Failed: Invalid secret code.')
-            return render(request, 'auth/register.html', {'form': CustomUserCreationForm()})
-
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            try:
-                with transaction.atomic():
-                    user = form.save()
-                    raw_password = form.cleaned_data.get('password1')
-                    user = authenticate(username=user.username, password=raw_password)
-                    login(request, user)
-                    print(f"User after login: {request.user}")  # This should print the user's username
-
-                    # Check if a UserProfile for the user already exists
-                    if not UserProfile.objects.filter(user=user).exists():
-                        # If not, create a new UserProfile for the user
-                        user_profile = UserProfile.objects.create(user=user, role='ADMIN')
-
-                        # Assign the user to a tenant based on your business logic
-                        # For example, if you have a form field where the user selects their tenant during registration:
-                        tenant_name = form.cleaned_data.get('tenant')
-                        tenant = Tenant.objects.get(name=tenant_name)
-                        user_profile.tenant = tenant
-                        user_profile.save()
-
-                messages.success(request, 'Registration Succeeded')
-                response = redirect('/two-fa-register-page')  # Redirect to the 2FA page
-                return response
-            except:
-                messages.error(request, 'Registration Failed: An error occurred.')
-                return render(request, 'auth/register.html', {'form': form})
+        # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.role not in ['WRITE', 'ADMIN']:
+            return HttpResponseForbidden('You do not have permission to perform this action')
         else:
-            messages.error(request, 'Registration Failed: Please fix form errors.')
-            return render(request, 'auth/register.html', {'form': form})
+            form = CustomUserCreationForm(request.POST)
+            if form.is_valid():
+                email = form.cleaned_data.get('email')
+                if User.objects.filter(email=email).exists():
+                    messages.error(request, 'Registration Failed: Email already in use.')
+                    return render(request, 'auth/register.html', {'form': form})
+                else:
+                    token = request.GET.get('token', None)  # Get the token parameter from the URL
+                    tenant_invitation = None
+                    if token:
+                        # Look up the TenantInvitation with the provided token
+                        try:
+                            tenant_invitation = TenantInvitation.objects.filter(token=token).first()
+                        except:
+                            tenant_invitation = None
+                    else:
+                        secret_code = form.cleaned_data.get('secret_code')
+                        if secret_code == 'SECRET_CODE':  # Replace with your secret code                
+                            with transaction.atomic():
+                                # Create User
+                                user = User.objects.create_user(
+                                    username=form.cleaned_data.get('username'),
+                                    password=form.cleaned_data.get('password1'),
+                                    email=form.cleaned_data.get('email')
+                                )
+
+                                if tenant_invitation:
+                                    # Create Tenant from TenantInvitation
+                                    tenant = Tenant.objects.create(name=tenant_invitation.tenant_name)
+                                    # Delete the TenantInvitation since it has been used
+                                    tenant_invitation.delete()
+                                else:
+                                    # Fallback to secret code mechanism
+                                    tenant_name = form.cleaned_data.get('tenant')
+                                    tenant = Tenant.objects.create(name=tenant_name)
+
+                                    # Create UserProfile
+                                    UserProfile.objects.create(
+                                        user=user,
+                                        tenant=tenant,
+                                        role='ADMIN',
+                                        email=form.cleaned_data.get('email')
+                                    )        
+                            # login user before redirecting
+                            login(request, user)
+                            messages.success(request, 'Registration Succeeded')
+                            return redirect('/two-fa-register-page')  # Redirect to the 2FA page
+                        else:
+                            messages.error(request, 'Registration Failed: Invalid secret code.')
+                            return render(request, 'auth/register.html', {'form': form})
+            else:
+                messages.error(request, 'Registration Failed: Please fix form errors.')
 
     else:
-        invite_code = request.GET.get('invite_code')
-        if invite_code:
-            try:
-                group_invitation = GroupInvitation.objects.get(invite_code=invite_code)  # Changed 'email_invite_code' to 'invite_code'
-                form = CustomUserCreationForm(initial={'username': group_invitation.email})  # Changed 'user' to 'initial' with 'username' and 'email'
-                # Set the invited_by_id field
-                group_invitation.invited_by_id = request.user.id
-                group_invitation.save()
-                return render(request, 'auth/register.html', {'form': form})
-            except GroupInvitation.DoesNotExist:
-                messages.error(request, 'Invalid invite code.')
-            
-        else:        
-            form = CustomUserCreationForm()
+        form = CustomUserCreationForm()
 
-            return render(request, 'auth/register.html', {'form': form})
+    return render(request, 'auth/register.html', {'form': form})
+
+class InvitationView(View):
+    def get(self, request, uidb64, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            login(request, user)
+            messages.success(request, 'Login Succeeded')
+            return redirect('/two-fa-register-page')
+        else:
+            messages.error(request, 'Login Failed: Invalid token.')
+            return redirect('login')
+
 #registration two_factor 
+
 def two_fa_register_page(request):
     user_id = request.COOKIES.get('user_id')
     if not user_id:
@@ -333,6 +373,7 @@ def two_fa_register_page(request):
 
 class LoginApiView(APIView):
     def post(self, request):
+        
         auth_header = request.META.get('HTTP_AUTHORIZATION')
         if auth_header and auth_header.startswith('Bearer '):
             bearer_token = auth_header
@@ -375,46 +416,56 @@ def wordCreation(request):
     if request.method == 'GET':
         print('error')
     else:
-        name = 'SupremeWordList'
-        WordList = DirectoryListingWordListSerializer()
-        try:
-            WordList = WordList[name]
-        except:
-            WordList = False
-        if WordList:
-            Words = WordList['WordList']
-            records = RecordSerializer()
+        # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.role not in ['WRITE', 'ADMIN']:
+            return HttpResponseForbidden('You do not have permission to perform this action')
         else:
-            Subdomains = Record.objects.values_list('subDomain', flat=True)
-            print(Subdomains)
-            records_stored = {}
-            records_stored = {}
-            totalCount = len(Subdomains)
-            domains = []
-            subDomains= []
-            Domain_Data_Set = {"subDomainCount": len(subDomains), "domainCount": len(domains), "totalCount": totalCount, "domainData": []}
-            dataSet_wordlistgroup = {"groupName": name, "type": "DNS", "description": f"the {name} is the self maintaining growing and learning list of found subdomains that will help with future discoveries.","count": 0}
-            for rec in Subdomains:
-                records_stored.add(rec['subDomain'])
-                domain = rec['subDomain']
-                tldExtracted= tldextract.extract(domain)
-                SUFFIX= tldExtracted.suffix
-                DOMAIN= tldExtracted.domain
-                SUBDOMAIN= tldExtracted.subdomain
-                dataSet_WordList = {"type": "DNS", "Value": SUBDOMAIN, "Occurance": 1, "foundAt": [DOMAIN.SUFFIX]}
-                print(domain)
-            return TemplateResponse(requests, 'Vulns/explore.html', {"customers": customers})
+            name = 'SupremeWordList'
+            WordList = DirectoryListingWordListSerializer()
+            try:
+                WordList = WordList[name]
+            except:
+                WordList = False
+            if WordList:
+                Words = WordList['WordList']
+                records = RecordSerializer()
+            else:
+                Subdomains = Record.objects.values_list('subDomain', flat=True)
+                print(Subdomains)
+                records_stored = {}
+                records_stored = {}
+                totalCount = len(Subdomains)
+                domains = []
+                subDomains= []
+                Domain_Data_Set = {"subDomainCount": len(subDomains), "domainCount": len(domains), "totalCount": totalCount, "domainData": []}
+                dataSet_wordlistgroup = {"groupName": name, "type": "DNS", "description": f"the {name} is the self maintaining growing and learning list of found subdomains that will help with future discoveries.","count": 0}
+                for rec in Subdomains:
+                    records_stored.add(rec['subDomain'])
+                    domain = rec['subDomain']
+                    tldExtracted= tldextract.extract(domain)
+                    SUFFIX= tldExtracted.suffix
+                    DOMAIN= tldExtracted.domain
+                    SUBDOMAIN= tldExtracted.subdomain
+                    dataSet_WordList = {"type": "DNS", "Value": SUBDOMAIN, "Occurance": 1, "foundAt": [DOMAIN.SUFFIX]}
+                    print(domain)
+                return TemplateResponse(requests, 'Vulns/explore.html', {"customers": customers})
 
 @login_required
 def fileUpload(request):
     if request.method == 'POST' and request.FILES['uploaded_file']:
-        uploaded_file = request.FILES['uploaded_file']
-        fs = FileSystemStorage()
-        filename = fs.save(uploaded_file.name, uploaded_file)
-        filename = fs.url(filename)
-        return render(request, 'WordList/WordClass.html', {
-            'filename': filename
-        })
+        # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.role not in ['WRITE', 'ADMIN']:
+            return HttpResponseForbidden('You do not have permission to perform this action')
+        else:
+            uploaded_file = request.FILES['uploaded_file']
+            fs = FileSystemStorage()
+            filename = fs.save(uploaded_file.name, uploaded_file)
+            filename = fs.url(filename)
+            return render(request, 'WordList/WordClass.html', {
+                'filename': filename
+            })
     else:
         return render(request, 'WordList/WordClass.html', {})
 
@@ -427,6 +478,7 @@ def home(request):
 def CustomerVIEW(request):
     search_query = request.GET.get('search', '')
     customers = Customers.objects.all()  # replace `Customer` with your actual model
+    
     return TemplateResponse(request, 'Customers/customers.html', {"Customers": customers})
 
 
@@ -440,17 +492,23 @@ def CustomersDelete(request, pk):
 def VulnSubmitted(request, pk):
     results = FoundVuln.objects.get(pk=pk)
     if request.POST == 'POST':
-        form = FoundVulnFormPK(request.POST, instance=results)
-        if form.is_valid():
-            form.Submitted = True
-            form.save()
+        # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.role not in ['WRITE', 'ADMIN']:
+            return HttpResponseForbidden('You do not have permission to perform this action')
+        else:
+            form = FoundVulnFormPK(request.POST, instance=results)
+            if form.is_valid():
+                form.Submitted = True
+                form.save()
     
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 # create a customer record    
 # Get country information from 2 character country code EN US FR GR
 @login_required
 def get_country_location(country_code):
+    
     try:
         country_info = pycountry.countries.get(alpha_2=country_code.upper())
         # You would need to replace this with a method to get the actual latitude and longitude of the country
@@ -480,10 +538,15 @@ def get_latitude_location(country_name, city):
 @login_required
 def CustomersCreateurl(request, format=None):
     if request.method == 'POST':
-        form = SimpleCustomersFormCreate(request.POST)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect('/Customers/Create')
+        # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.role not in ['WRITE', 'ADMIN']:
+            return HttpResponseForbidden('You do not have permission to perform this action')
+        else:        
+            form = SimpleCustomersFormCreate(request.POST)
+            if form.is_valid():
+                form.save()
+                return HttpResponseRedirect('/Customers/Create')
     else:
         form = SimpleCustomersFormCreate()
 
@@ -551,13 +614,18 @@ def CustomerPk(request, pk, format=None):
         return TemplateResponse(request, "Customers/customersPK.html", {"Customer": data, "form": form, 'page_obj': page_obj})
 
     elif request.method == 'POST':
-        customer = get_object_or_404(Customers, pk=pk)
-        form = SimpleCustomersFormCreate(request.POST, instance=customer)
-        if form.is_valid():
-            results = form.save()
-            return HttpResponseRedirect(f'/Customers/{results.pk}/')
-        else:
-            return HttpResponse("Form is not valid", status=400)
+        # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.role not in ['WRITE', 'ADMIN']:
+            return HttpResponseForbidden('You do not have permission to perform this action')
+        else:        
+            customer = get_object_or_404(Customers, pk=pk)
+            form = SimpleCustomersFormCreate(request.POST, instance=customer)
+            if form.is_valid():
+                results = form.save()
+                return HttpResponseRedirect(f'/Customers/{results.pk}/')
+            else:
+                return HttpResponse("Form is not valid", status=400)
     else:
         form = SimpleCustomersFormCreate(instance=customer)
     return TemplateResponse(request, 'Customers/customersPK.html', {'form': form})
@@ -639,11 +707,16 @@ def VulnsBoardChartPK(request, pk):
 @login_required
 
 def RecordDelete(request, pk):
-    results = get_object_or_404(Record, pk=pk)
-    #record = CustomersViewSet(results)
-    queryset = TotalRecords(results)
-    queryset.delete() 
-    return HttpResponseRedirect(f'/Customers/{results.pk}')
+    # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+    user_profile = UserProfile.objects.get(user=request.user)
+    if user_profile.role not in ['WRITE', 'ADMIN']:
+        return HttpResponseForbidden('You do not have permission to perform this action')
+    else:
+        results = get_object_or_404(Record, pk=pk)
+        #record = CustomersViewSet(results)
+        queryset = TotalRecords(results)
+        queryset.delete() 
+        return HttpResponseRedirect(f'/Customers/{results.pk}')
 
 ## GNAW
 @login_required
@@ -959,12 +1032,17 @@ def WordClass(request):
 
 @login_required
 def WordClassCreate(request):
-    WordList = WordListGroup.objects.all()
-    if request.method == 'POST':
-        form = WordListGroupFormData(request.POST or None)
-        if form.is_valid():
-            form.save()
-    return HttpResponseRedirect(f"/WordList/")
+    # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+    user_profile = UserProfile.objects.get(user=request.user)
+    if user_profile.role not in ['WRITE', 'ADMIN']:
+        return HttpResponseForbidden('You do not have permission to perform this action')
+    else:
+        WordList = WordListGroup.objects.all()
+        if request.method == 'POST':
+            form = WordListGroupFormData(request.POST or None)
+            if form.is_valid():
+                form.save()
+        return HttpResponseRedirect(f"/WordList/")
 
 def check_totalcpe_in_vulnerability(TOTALCPE, vulnerability):
     for configuration in vulnerability.configurations.all():
@@ -976,207 +1054,212 @@ def check_totalcpe_in_vulnerability(TOTALCPE, vulnerability):
 
 @login_required
 def TotalVulnApp(request, pk):
-    index = [
-        ('info, low, medium, high, critical, unknown'),
-     ('info'),
-     ('low'),
-     ('medium'),
-     ('high'),
-     ('critical'),
-     ('unknown')
-     ]  
-
-    response = requests.get(f'http://127.0.0.1:10000/api/customers/{pk}')
-    #convert reponse data into json
-    rjson = response.json()
-    Records_here = rjson['customer_records']
-    services_nmap_out = []
-
-    ports_out= []
-    set_sorted_ports=[]
-    single_ports_out= set()
-    newcpeseen=[]
-    for n in Records_here:
-        domain = n.get('subDomain')
-        ###print(domain)
-        nmap = n.get('Nmaps_record',[])
-        nmap_ports = {"ports" : []} 
-        nmap_products = {"products" : [] }
-        nmap_services = {"services" : [] }
-        nmap_protocols = {"protocols" : [] }
-        listed_services = []
-        for map in nmap:
-            if n['alive'] == False:
-                pass
-            else:
-                ports = map.get('port', {})
-                if ports:
-                    nmap_ports['ports'].append(ports)
-                    ports_out.append(ports)
-                    set_sorted_ports.append(ports)
-                    single_ports_out.add(ports)
-                    
-                try:
-                    product = map.get('product')
-                    nmap_products['products'].append(product)
-                    protocol = map.get('protocol')
-                    nmap_protocols['protocols'].append(protocol)
-                    service = map.get('name')
-                    nmap_services['services'].append(service)
-                    servicefp = map['servicefp']
-                    regex = re.compile("(?<=,\")(.*?)(?=\"\))")
-                    print(servicefp['servicefp'])
-                    found = re.search(regex, str(servicefp))
-                    grouping = found.group(1)
-                    spaces = grouping.replace('\\x20' , ' ')
-                    macsnewline = spaces.replace('\\r', '')
-                    period = macsnewline.replace('\\.', '.')
-                    results = period.split('\\n')
-                    request_formated_dict = dict.fromkeys(['results'], results)
-                    DIC = {}
-                    DIC.update(request_formated_dict)
-                except:
-                    DIC = {}
-                    
-                    
-                record_dict = dict.fromkeys(['record'], n)
-
-                    
-                nmap_dict = dict.fromkeys(['map'], map)
-                cpe = map.get('cpe')
-                nist_dict=[]
-                print('service',service)
-                if len(cpe)>0:
-                    try:
-                        if cpe in newcpeseen:
-                            pass
-                        else:
-
-
-                            newcpeseen.append(cpe)
-                            newcpe=cpe.replace('cpe:/','')
-                            print(newcpe)
-                            time.sleep(1)
-                            nisturl = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName=cpe:2.3:{newcpe}:{service}"
-                            print(nisturl)
-                            response = requests.get(
-                                url=nisturl
-                            )
-                            print(response.status_code)
-                            print('above')
-                            nist_rjson = response.json()
-                            vulns = (nist_rjson.get('vulnerabilities'))
-                                
-                            for vuln in vulns:
-                                print(vuln)
-                                cve=vuln.get('cve')
-                                for k in cve:
-                                    print(k)
-                                    if k == 'descriptions':
-                                        DICnist_rjson ={}
-                                        descript= cve.get('descriptions')
-                                        descout = descript[0]
-                                        DESCRIPT= dict.fromkeys(['descriptions'], descout)
-                                        DICnist_rjson.update(DESCRIPT)
-                                        references=cve.get('references')
-                                        refeDict= dict.fromkeys(['references'], references)
-                                        DICnist_rjson.update(refeDict)
-                                        for d in descript:
-                                            print(d)
-                                            metrics = (cve.get('metrics'))
-                                            print(metrics)
-                                            cvs = metrics.get('cvssMetricV2', {})
-                                                
-                                            print(cvs)
-                                            for score in cvs:
-                    
-                                                s = score.get('cvssData')
-                                                DICnist_rjson.update(s)
-                                                nist_dict.append(DICnist_rjson)
-                    except:
-                        pass
-                nist_dict = dict.fromkeys(['nist'], nist_dict) 
-                dict_cpe = dict.fromkeys(['cpe'], str(cpe))
-                print('#')
-               # ###print(nist_dict)
-                print('#')
-                subdomain = dict.fromkeys(['domain'], domain)
-                DIC.update(nmap_ports)
-                DIC.update(nist_dict)
-                DIC.update(subdomain)
-                DIC.update(dict_cpe)
-                DIC.update(record_dict)
-                DIC.update(nmap_dict)
-                listed_services.append(DIC)
-        listedServices = dict.fromkeys(['listed_services'], listed_services)
-        outDIC = {}
-        outDIC.update(listedServices)
-        outDIC.update(nmap_products)
-        outDIC.update(nmap_services)
-        outDIC.update(nmap_protocols)
-        
-        
-        services_nmap_out.append(outDIC)
-        ###print('#')
-        ###print('services_nmap_out', services_nmap_out)
-        ###print('#')
-
-    templates = [ n.get('Templates_record', {})[0] for n in Records_here if bool(n.get('Templates_record', {})) != False]
-    info = [ t.get('info', {}) for t in templates]
-    
-    severity = [s['severity'] for s in info ]
-    #severity = info.get('severity')
-    occurrence = {item: severity.count(item) for item in severity}
-    results = {item: 0 for item in index if item not in occurrence}
-    occurrence.update(results)
-
-    ###print(occurrence)
-    print(np.cumsum(severity))
-    #df = pd.DataFrame.from_dict(severity)
-    #dfgraph = df.plot.bar()
-    #image = dfi.export(df, 'dataframe.png')
-    mydict = {
-        "dataframe":  occurrence
-    }
-    
-    #fuzz.partial_ratio(str(lowerCustomerValues),str(lowerVendorValues))
-    seen=set()
-    seen_add = seen.add
-    tuple_list = [ t for t in services_nmap_out if  t.get('map') ]
-    ###print('#')
-    ###print(tuple_list)
-    nmap_tup = [ (x.get('map').get('port')) for x in tuple_list  if x.get('map').get('port') ]
-    ###print(nmap_tup)
-    ###print('#')
-    if nmap_tup:
-        ignore = list(mode(nmap_tup))
-        ###print(ignore)
-    flat_list_ports = [s for s in tuple_list if s.get('map').get('port') != ignore]
-    #flat_list_ports = [s for s in set_sorted_ports if s.get('OpenPorts', ) in super]
-    flat_list_subdomain_alive = [p for p in Records_here if bool(p.get('alive', "")) == True ]
-    flat_list_subdomain_dead = [p for p in Records_here if bool(p.get('alive', "")) == False ]
-    counter = len(rjson['customer_records'])
-    services_nmap = dict.fromkeys(['services_nmap'], services_nmap_out)
-    dic_flat_list_subdomain_alive = dict.fromkeys(['alive_host'], flat_list_subdomain_alive)
-    dic_flat_list_subdomain_dead = dict.fromkeys(['dead_host'], flat_list_subdomain_dead)
-    dic_flat_list_ports = dict.fromkeys(['flat_list_port_tuple'], flat_list_ports)
-    dic_ports = dict.fromkeys(['total_ports'], sorted(ports_out))
-    dic_single_ports = dict.fromkeys(['single_ports'], sorted(single_ports_out))
-    dic_count = dict.fromkeys(['counter'], counter)
-    ###print(counter)
-    rjson.update(dic_flat_list_subdomain_dead)
-    rjson.update(dic_flat_list_subdomain_alive)
-    rjson.update(dic_flat_list_ports)
-    rjson.update(dic_count)
-    rjson.update(dic_ports)
-    rjson.update(dic_single_ports)
-    rjson.update(mydict)
-    rjson.update(services_nmap)
-    print(rjson)
-    if rjson:
-        return render(request, "TotalVulnApp.html", {'rjson': rjson}, )
+    # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+    user_profile = UserProfile.objects.get(user=request.user)
+    if user_profile.role not in ['WRITE', 'ADMIN']:
+        return HttpResponseForbidden('You do not have permission to perform this action')    
     else:
-        return HttpResponseRedirect('/Web/')
+        index = [
+            ('info, low, medium, high, critical, unknown'),
+         ('info'),
+         ('low'),
+         ('medium'),
+         ('high'),
+         ('critical'),
+         ('unknown')
+         ]  
+
+        response = requests.get(f'http://127.0.0.1:10000/api/customers/{pk}')
+        #convert reponse data into json
+        rjson = response.json()
+        Records_here = rjson['customer_records']
+        services_nmap_out = []
+
+        ports_out= []
+        set_sorted_ports=[]
+        single_ports_out= set()
+        newcpeseen=[]
+        for n in Records_here:
+            domain = n.get('subDomain')
+            ###print(domain)
+            nmap = n.get('Nmaps_record',[])
+            nmap_ports = {"ports" : []} 
+            nmap_products = {"products" : [] }
+            nmap_services = {"services" : [] }
+            nmap_protocols = {"protocols" : [] }
+            listed_services = []
+            for map in nmap:
+                if n['alive'] == False:
+                    pass
+                else:
+                    ports = map.get('port', {})
+                    if ports:
+                        nmap_ports['ports'].append(ports)
+                        ports_out.append(ports)
+                        set_sorted_ports.append(ports)
+                        single_ports_out.add(ports)
+                    
+                    try:
+                        product = map.get('product')
+                        nmap_products['products'].append(product)
+                        protocol = map.get('protocol')
+                        nmap_protocols['protocols'].append(protocol)
+                        service = map.get('name')
+                        nmap_services['services'].append(service)
+                        servicefp = map['servicefp']
+                        regex = re.compile("(?<=,\")(.*?)(?=\"\))")
+                        print(servicefp['servicefp'])
+                        found = re.search(regex, str(servicefp))
+                        grouping = found.group(1)
+                        spaces = grouping.replace('\\x20' , ' ')
+                        macsnewline = spaces.replace('\\r', '')
+                        period = macsnewline.replace('\\.', '.')
+                        results = period.split('\\n')
+                        request_formated_dict = dict.fromkeys(['results'], results)
+                        DIC = {}
+                        DIC.update(request_formated_dict)
+                    except:
+                        DIC = {}
+                    
+                    
+                    record_dict = dict.fromkeys(['record'], n)
+
+                    
+                    nmap_dict = dict.fromkeys(['map'], map)
+                    cpe = map.get('cpe')
+                    nist_dict=[]
+                    print('service',service)
+                    if len(cpe)>0:
+                        try:
+                            if cpe in newcpeseen:
+                                pass
+                            else:
+
+
+                                newcpeseen.append(cpe)
+                                newcpe=cpe.replace('cpe:/','')
+                                print(newcpe)
+                                time.sleep(1)
+                                nisturl = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName=cpe:2.3:{newcpe}:{service}"
+                                print(nisturl)
+                                response = requests.get(
+                                    url=nisturl
+                                )
+                                print(response.status_code)
+                                print('above')
+                                nist_rjson = response.json()
+                                vulns = (nist_rjson.get('vulnerabilities'))
+                                
+                                for vuln in vulns:
+                                    print(vuln)
+                                    cve=vuln.get('cve')
+                                    for k in cve:
+                                        print(k)
+                                        if k == 'descriptions':
+                                            DICnist_rjson ={}
+                                            descript= cve.get('descriptions')
+                                            descout = descript[0]
+                                            DESCRIPT= dict.fromkeys(['descriptions'], descout)
+                                            DICnist_rjson.update(DESCRIPT)
+                                            references=cve.get('references')
+                                            refeDict= dict.fromkeys(['references'], references)
+                                            DICnist_rjson.update(refeDict)
+                                            for d in descript:
+                                                print(d)
+                                                metrics = (cve.get('metrics'))
+                                                print(metrics)
+                                                cvs = metrics.get('cvssMetricV2', {})
+                                                
+                                                print(cvs)
+                                                for score in cvs:
+                    
+                                                    s = score.get('cvssData')
+                                                    DICnist_rjson.update(s)
+                                                    nist_dict.append(DICnist_rjson)
+                        except:
+                            pass
+                    nist_dict = dict.fromkeys(['nist'], nist_dict) 
+                    dict_cpe = dict.fromkeys(['cpe'], str(cpe))
+                    print('#')
+                   # ###print(nist_dict)
+                    print('#')
+                    subdomain = dict.fromkeys(['domain'], domain)
+                    DIC.update(nmap_ports)
+                    DIC.update(nist_dict)
+                    DIC.update(subdomain)
+                    DIC.update(dict_cpe)
+                    DIC.update(record_dict)
+                    DIC.update(nmap_dict)
+                    listed_services.append(DIC)
+            listedServices = dict.fromkeys(['listed_services'], listed_services)
+            outDIC = {}
+            outDIC.update(listedServices)
+            outDIC.update(nmap_products)
+            outDIC.update(nmap_services)
+            outDIC.update(nmap_protocols)
+        
+        
+            services_nmap_out.append(outDIC)
+            ###print('#')
+            ###print('services_nmap_out', services_nmap_out)
+            ###print('#')
+
+        templates = [ n.get('Templates_record', {})[0] for n in Records_here if bool(n.get('Templates_record', {})) != False]
+        info = [ t.get('info', {}) for t in templates]
+    
+        severity = [s['severity'] for s in info ]
+        #severity = info.get('severity')
+        occurrence = {item: severity.count(item) for item in severity}
+        results = {item: 0 for item in index if item not in occurrence}
+        occurrence.update(results)
+
+        ###print(occurrence)
+        print(np.cumsum(severity))
+        #df = pd.DataFrame.from_dict(severity)
+        #dfgraph = df.plot.bar()
+        #image = dfi.export(df, 'dataframe.png')
+        mydict = {
+            "dataframe":  occurrence
+        }
+    
+        #fuzz.partial_ratio(str(lowerCustomerValues),str(lowerVendorValues))
+        seen=set()
+        seen_add = seen.add
+        tuple_list = [ t for t in services_nmap_out if  t.get('map') ]
+        ###print('#')
+        ###print(tuple_list)
+        nmap_tup = [ (x.get('map').get('port')) for x in tuple_list  if x.get('map').get('port') ]
+        ###print(nmap_tup)
+        ###print('#')
+        if nmap_tup:
+            ignore = list(mode(nmap_tup))
+            ###print(ignore)
+        flat_list_ports = [s for s in tuple_list if s.get('map').get('port') != ignore]
+        #flat_list_ports = [s for s in set_sorted_ports if s.get('OpenPorts', ) in super]
+        flat_list_subdomain_alive = [p for p in Records_here if bool(p.get('alive', "")) == True ]
+        flat_list_subdomain_dead = [p for p in Records_here if bool(p.get('alive', "")) == False ]
+        counter = len(rjson['customer_records'])
+        services_nmap = dict.fromkeys(['services_nmap'], services_nmap_out)
+        dic_flat_list_subdomain_alive = dict.fromkeys(['alive_host'], flat_list_subdomain_alive)
+        dic_flat_list_subdomain_dead = dict.fromkeys(['dead_host'], flat_list_subdomain_dead)
+        dic_flat_list_ports = dict.fromkeys(['flat_list_port_tuple'], flat_list_ports)
+        dic_ports = dict.fromkeys(['total_ports'], sorted(ports_out))
+        dic_single_ports = dict.fromkeys(['single_ports'], sorted(single_ports_out))
+        dic_count = dict.fromkeys(['counter'], counter)
+        ###print(counter)
+        rjson.update(dic_flat_list_subdomain_dead)
+        rjson.update(dic_flat_list_subdomain_alive)
+        rjson.update(dic_flat_list_ports)
+        rjson.update(dic_count)
+        rjson.update(dic_ports)
+        rjson.update(dic_single_ports)
+        rjson.update(mydict)
+        rjson.update(services_nmap)
+        print(rjson)
+        if rjson:
+            return render(request, "TotalVulnApp.html", {'rjson': rjson}, )
+        else:
+            return HttpResponseRedirect('/Web/')
 
     
 def flatten_dict(d, parent_key='', sep='_'):

@@ -193,7 +193,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='GroupInvitation',
+            name='TenantInvitation',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('email', models.EmailField(max_length=254)),
@@ -346,7 +346,7 @@ class Migration(migrations.Migration):
             name='UserGroup',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('group', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_groups', to='ego.groupinvitation')),
+                ('group', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_groups', to='ego.TenantInvitation')),
                 ('users', models.ManyToManyField(related_name='user_groups', to='ego.userprofile')),
             ],
         ),

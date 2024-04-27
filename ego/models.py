@@ -33,11 +33,14 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
+from django.db import transaction
 
 class Tenant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -52,27 +55,24 @@ class UserProfile(models.Model):
     role = models.CharField(max_length=5, choices=ROLE_CHOICES, default='READ')
     email_invite_code = models.CharField(max_length=100, null=True, blank=True)
 
-class GroupInvitation(models.Model):
-    email = models.EmailField(max_length=254)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    def __str__(self):
+        return self.user.username
+
+class TenantInvitation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(unique=True)
     ROLE_CHOICES = [
         ('ADMIN', 'Admin'),
         ('READ', 'Read'),
         ('WRITE', 'Write'),
     ]
     role = models.CharField(max_length=5, choices=ROLE_CHOICES, default='READ')    
-    invited_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     invite_code = models.UUIDField(default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+    invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
-    def save(self, *args, **kwargs):
-        if not self.pk:  # if this is a new object
-            self.invited_by = self.group.user_set.first()  # set invited_by to the first user in the group
-        super().save(*args, **kwargs)
-
-class UserGroup(models.Model):
-    users = models.ManyToManyField(UserProfile, related_name='user_groups')
-    group = models.ForeignKey(GroupInvitation, on_delete=models.CASCADE, related_name='user_groups')
-     
+    def __str__(self):
+        return self.email
 
 Choices_Severity= [
 ('info, low, medium, high, critical, unknown', 'All'),
@@ -297,7 +297,7 @@ class GnawControl(BaseModel):
     Gnaw_Completed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">Used to scan all customers.</fieldset>')
     failed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">An exception occured.</fieldset>')
     scan_objects = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
-    scannedHost = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
+    scannedHost = models.JSONField(blank=True, default=list)
     
 class EgoControl(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -640,3 +640,48 @@ class PythonMantis(BaseModel):
     tags = fields.ArrayField(models.CharField(max_length=75))
     tcpversioning = models.CharField(max_length = 2048, blank=True)
     
+class Vulnerability(models.Model):
+    id = models.CharField(max_length=50, primary_key=True)
+    source_identifier = models.CharField(max_length=50)
+    published = models.DateTimeField()
+    last_modified = models.DateTimeField()
+    vuln_status = models.CharField(max_length=50)
+    descriptions = models.JSONField()
+    metrics = models.JSONField()
+    weaknesses = models.JSONField()
+    configurations = models.JSONField()
+    references = models.JSONField()
+
+class Description(models.Model):
+    lang = models.CharField(max_length=10)
+    value = models.TextField()
+    vulnerability = models.ForeignKey(Vulnerability, related_name='descriptions', on_delete=models.CASCADE)
+
+class Metric(models.Model):
+    source = models.CharField(max_length=50)
+    type = models.CharField(max_length=50)
+    cvss_data = models.JSONField()
+    base_severity = models.CharField(max_length=50)
+    exploitability_score = models.FloatField()
+    impact_score = models.FloatField()
+    ac_insuf_info = models.BooleanField()
+    obtain_all_privilege = models.BooleanField()
+    obtain_user_privilege = models.BooleanField()
+    obtain_other_privilege = models.BooleanField()
+    user_interaction_required = models.BooleanField()
+    vulnerability = models.ForeignKey(Vulnerability, related_name='metrics', on_delete=models.CASCADE)
+
+class Weakness(models.Model):
+    source = models.CharField(max_length=50)
+    type = models.CharField(max_length=50)
+    description = models.JSONField()
+    vulnerability = models.ForeignKey(Vulnerability, related_name='weaknesses', on_delete=models.CASCADE)
+
+class Configuration(models.Model):
+    nodes = models.JSONField()
+    vulnerability = models.ForeignKey(Vulnerability, related_name='configurations', on_delete=models.CASCADE)
+
+class Reference(models.Model):
+    url = models.URLField()
+    source = models.CharField(max_length=50)
+    vulnerability = models.ForeignKey(Vulnerability, related_name='references', on_delete=models.CASCADE)

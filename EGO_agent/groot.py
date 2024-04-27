@@ -624,15 +624,10 @@ def register_and_update_agent(auth_token_json=None):
     agent_response_store = []
     for response in responses:
         if response.get('egoAgent') is None and not response.get('Gnaw_Completed', False):
-            if EgoSettings.egoAgent:
-                # If EgoSettings.egoAgent is set, update the GnawControl instance with this value
-                ego_id = response.get('id')  # Assuming the response contains an 'id' key
-                agent_response = update_AgentControl(ego_id, EgoSettings.egoAgent, auth_token_json)
-                Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
-                request = get_request(Url_EgoControls, auth_token_json)
-                response = request.json()                
-                response_store.append(response)
-                agent_response_store.append(agent_response)
+            # Check if egoAgent.txt exists
+            if os.path.exists('egoAgent.txt'):
+                with open('egoAgent.txt', 'r') as file:
+                    EgoSettings.egoAgent = file.read().strip()
             else:
                 # If EgoSettings.egoAgent is not set, create a new EGOAgent instance
                 data = {}  # Add necessary data here
@@ -640,22 +635,19 @@ def register_and_update_agent(auth_token_json=None):
                 agent_id = agent_response.get('id')  # Assuming the response contains an 'id' key
                 # Update EgoSettings.egoAgent with the new agent's ID
                 EgoSettings.egoAgent = agent_id
-                with open('EgoSettings.py', 'r') as file:
-                    lines = file.readlines()
-                with open('EgoSettings.py', 'w') as file:
-                    for line in lines:
-                        if line.startswith("egoAgent ="):
-                            file.write(f"egoAgent = '{EgoSettings.egoAgent}'\n")
-                        else:
-                            file.write(line)
-                # Update the GnawControl instance with the new agent's ID
-                ego_id = response.get('id')  # Assuming the response contains an 'id' key
-                update_AgentControl(ego_id, agent_id, auth_token_json)
-                Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
-                request = get_request(Url_EgoControls, auth_token_json)
-                response = request.json()    
-                response_store.append(response)
-                agent_response_store.append(agent_response)
+                # Remove special characters and spaces from the string
+                EgoSettings.egoAgent = re.sub(r'\W+', '', str(EgoSettings.egoAgent))
+                # Write the new agent's ID to egoAgent.txt
+                with open('egoAgent.txt', 'w') as file:
+                    file.write(EgoSettings.egoAgent)
+            # Update the GnawControl instance with the new agent's ID
+            ego_id = response.get('id')  # Assuming the response contains an 'id' key
+            update_AgentControl(ego_id, EgoSettings.egoAgent, auth_token_json)
+            Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
+            request = get_request(Url_EgoControls, auth_token_json)
+            response = request.json()    
+            response_store.append(response)
+            agent_response_store.append(agent_response)
     return response_store, agent_response_store
 
 def update_gnaw_control(sub_domain, ego_id, auth_token_json):
@@ -875,19 +867,23 @@ def gnaw():
         # Send the PATCH request
         response = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
         print('done record ')
+    return 'Done'
 
+from multiprocessing import Process
 
 if __name__ == "__main__":
-    counter = 0
+    processes = []
     while True:
-        print('sss')
-        print('sss')
-        gnaw()
-        counter += 1
-        if counter == 3:
-            print('sleeping for 5 minutes...')
-            time.sleep(300)  # sleep for 5 minutes
-            counter = 0  # reset the counter
+        # If there are less than 3 gnaw functions running, start a new one
+        if len(processes) < 3:
+            p = Process(target=gnaw)
+            p.start()
+            processes.append(p)
         else:
-            print('sleeping 30 seconds...')
-            time.sleep(30)
+            # If there are 3 gnaw functions running, wait for one to finish
+            for p in processes:
+                if not p.is_alive():
+                    processes.remove(p)
+                    break
+            # Sleep for a while to prevent CPU overload
+            time.sleep(1)
