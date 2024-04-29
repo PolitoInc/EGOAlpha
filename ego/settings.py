@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'rest_framework',
     'bootstrap5',
     'drf_multiple_model',
@@ -52,7 +53,7 @@ INSTALLED_APPS = [
     'werkzeug_debugger_runserver',
     'django_extensions',
     'ego',
-    'django.contrib.sites',
+    'corsheaders',
 ]
 
 SESSION_COOKIE_NAME = 'JSESSIONID'
@@ -67,6 +68,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'ego.urls'
@@ -100,12 +102,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'charlesmcgowen@gmail.com'  # Replace with your Gmail address
-EMAIL_HOST_PASSWORD = '%;RXutV\'"0n6G+AY'  # Replace with your Gmail password
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-
-
+EMAIL_HOST_USER = ''  # Replace with your Gmail address
+EMAIL_HOST_PASSWORD = ''  # Replace with your Gmail password
+DEFAULT_FROM_EMAIL = 
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
@@ -170,3 +169,6 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CORS_ALLOWED_ORIGINS = [
+    "http://71.163.15.133:5000/",
+]

@@ -70,7 +70,8 @@ class TenantInvitation(models.Model):
     invite_code = models.UUIDField(default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
     invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-
+    last_login = models.DateTimeField(auto_now_add=True)
+    
     def __str__(self):
         return self.email
 

@@ -17,13 +17,14 @@ import pandas as pd
 import pycountry
 import tldextract
 from django import VERSION
+from .token_generator import invitation_token_generator
 from django.conf import settings
 from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.models import ContentType, Group, User
-from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
@@ -48,7 +49,7 @@ from ego.authentication import *
 from ego.forms import *
 from ego.models import *
 from ego.serializers import *
-from ego.services import login_user_service
+from ego.services import *
 from fuzzywuzzy import fuzz, process
 from geopy.geocoders import Nominatim
 from rest_framework.authentication import TokenAuthentication
@@ -123,7 +124,7 @@ class UserProfileView(View):
                 'tenant_invitations': tenant_invitations
             })
         else:
-            return HttpResponseRedirect(reverse_lazy('login'))
+            return HttpResponseRedirect(reverse_lazy('user_profile'))
         
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -137,20 +138,13 @@ class UserProfileView(View):
                 tenant_invitation.tenant = user_profile.tenant  # Set the tenant field to the tenant of the user who is creating the invitation
                 tenant_invitation.save()  # Now save the TenantInvitation instance
 
-                user_group = UserGroup()
-                user_group.group_id = tenant_invitation.id  # Assign the id of the tenant_invitation, not the object itself
-                user_group.save()
-
-                user_group.users.add(user_profile)  # add the UserProfile instance to the users ManyToManyField
-                user_group.save()
-
                 tenant = tenant_invitation.tenant  # assuming 'tenant' is a property of TenantInvitation
 
                 # Get the current site (domain)
                 current_site = get_current_site(request)
                 # Generate a token with the user's information
                 token = default_token_generator.make_token(user_profile.user)
-                uid = urlsafe_base64_encode(force_bytes(user_profile.user.pk))
+                uid = urlsafe_base64_encode(force_bytes(tenant_invitation.pk))
 
                 invitation_url = f"http://{current_site.domain}{reverse('invitation_view', kwargs={'uidb64': uid, 'token': token})}"
 
@@ -174,6 +168,23 @@ class UserProfileView(View):
                 return TemplateResponse(request, 'Account/account.html', {'tenant_invitation_form': tenant_invitation_form})
         else:
             return HttpResponseForbidden("You are not authorized to perform this action.")
+
+
+@login_required
+def InvitationDeleteView(self, request, *args, **kwargs):
+    print('aaaaaaaaaaaa')
+    if request.method == 'POST':
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.role not in ['WRITE', 'ADMIN']:
+            return HttpResponseForbidden('You do not have permission to perform this action')
+        else:
+            try:
+                invitation = TenantInvitation.objects.get(id=kwargs['pk'])
+                invitation.delete()
+                return HttpResponse(status=204)
+            except TenantInvitation.DoesNotExist:
+                return HttpResponse(status=404)
+
 
 class Set2FAView(generic.CreateView):
     """
@@ -335,20 +346,21 @@ class InvitationView(View):
     def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            user = None
+            invitation = TenantInvitation.objects.get(id=uid)
+        except (TypeError, ValueError, OverflowError, TenantInvitation.DoesNotExist):
+            invitation = None
 
-        if user is not None and default_token_generator.check_token(user, token):
-            login(request, user)
-            messages.success(request, 'Login Succeeded')
-            return redirect('/two-fa-register-page')
+        if invitation is not None and invitation_token_generator.check_token(invitation, token):
+            # Create a form instance and populate it with data from the invitation:
+            form = CustomUserCreationForm(initial={'email': invitation.email})
+            # Render the form with the user's information:
+            return render(request, 'registration/register.html', {'form': form})
         else:
-            messages.error(request, 'Login Failed: Invalid token.')
+            messages.error(request, 'Invitation Failed: Invalid token.')
             return redirect('login')
 
-#registration two_factor 
 
+#registration two_factor 
 def two_fa_register_page(request):
     user_id = request.COOKIES.get('user_id')
     if not user_id:

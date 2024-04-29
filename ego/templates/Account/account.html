@@ -29,15 +29,22 @@
       {{ tenant_invitation_form.as_p }}
       <button type="submit">Invite</button>
     </form>
+
   </div>
   <div>
     <h2>Group Membership</h2>
 	<ul>
 	  {% for group in tenant_invitations %}
 		<li>{{ group.email }}</li>
+        <form id="deleteForm" action="{% url 'InvitationDeleteView' group.id %}" method="post">
+            {% csrf_token %}
+            <input type="submit" value="Delete Invitation">
+        </form>
 	  {% endfor %}
 	</ul>
     </div>
 </div>
 
+
 {% endblock %}
+

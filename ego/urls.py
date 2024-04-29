@@ -19,6 +19,7 @@ urlpatterns = [
     path('verify-two-factor-auth/', Verify2FAView.as_view(), name='Verify2FAView'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('invitation/<uidb64>/<token>/', InvitationView.as_view(), name='invitation_view'),
+    path('invitation/delete/<pk>/', InvitationDeleteView, name='InvitationDeleteView'),
     path('register/', register, name='register'),
     path('admin/', admin.site.urls),
     path('Customers/', CustomerVIEW, name='CustomerVIEW'),
