@@ -329,3 +329,10 @@ class WordListGroupFormData(forms.ModelForm):
             'count'
             )
 
+
+def validate_file_extension(value):
+    if not value.name.endswith('.txt'):
+        raise ValidationError("Only .txt files are allowed.")
+
+class UploadFileForm(forms.Form):
+    uploaded_file = forms.FileField(validators=[validate_file_extension])

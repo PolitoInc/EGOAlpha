@@ -35,13 +35,22 @@
         </form>
     </div>
     <div>
-    {% for w in WordList %}
+{% for w in WordList %}
+  <div class="container">
+    <form method="post" enctype="multipart/form-data" action="{% url 'WordClassBulkCreate' w.id %}">
+        {% csrf_token %}
+        <input type="file" name="uploaded_file" accept=".txt">
+        <input type="submit" value="Upload">
+    </form>
+  </div>
+  <!-- rest of your code -->
+
     <p><a href="{url "" w.id}"</br>
     {{w.groupName}}</br>
     {{w.description}}</br>
     {{w.count}}</br></p>
-    {% endfor %}
+
     </div>
 </div>
-
+    {% endfor %}
 {% endblock %}

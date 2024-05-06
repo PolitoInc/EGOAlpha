@@ -76,6 +76,13 @@ class RequestMetaDataSerializer(serializers.ModelSerializer):
             )
 
 
+class EGOAgentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EGOAgent
+        fields = ['id', 'hostLocation', 'lastConnect',
+                  'callBackTime', 'bearer_token', 
+                  'checkin', 
+                  'sleep', 'alive', 'scanning']
     
 
 class limitedCustomerSerializer(serializers.ModelSerializer):
@@ -295,6 +302,8 @@ class WordListSerializer(serializers.ModelSerializer):
             )
 
 class WordListGroupSerializer(serializers.ModelSerializer):
+    wordlist_count = serializers.SerializerMethodField()
+
     class Meta:
         model = WordListGroup
         fields = (
@@ -303,7 +312,11 @@ class WordListGroupSerializer(serializers.ModelSerializer):
             'type',
             'description',
             'count',
-            )
+            'wordlist_count',
+        )
+
+    def get_wordlist_count(self, obj):
+        return WordList.objects.filter(WordList=obj).count()
         
 
 #########################
@@ -570,6 +583,9 @@ class TotalFoundVulnSeerializers(serializers.ModelSerializer):
             )
 #############################################################
 #############################################################
+
+
+
 
 class PythonMantisSerializer(serializers.ModelSerializer):
 

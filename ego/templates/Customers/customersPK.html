@@ -6,9 +6,14 @@
 {% load scale_font %}
 
 {% block head %}
+
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.3.1/html-docx.min.js"></script>
+
 {% endblock %}
+
 
 {% block title %}
     {{Customer.nameCustomer}}
@@ -146,7 +151,22 @@
             {% endfor %}
         </div>
     </div>
+            <style>
+            .product-link {
+                font-weight:bold;
+                font-size: 24px; /* Increase the font size */
+                padding-right: 10px; 
+                transition: transform 0.3s ease-in-out; /* Add a transition effect */
+                color: #003366;
+            }
 
+            .product-link:hover {
+                transform: scale(0.75); /* Shrink the link to 75% of its original size on hover */
+            }
+            .table td {
+                max-width: 300px;
+            }
+            </style>
     <div class="bottom">
         <div class="button-container">
             <button class="btn btn-primary record-button" data-record="GEOCODES">GEO Codes</button>
@@ -155,35 +175,26 @@
             <button class="btn btn-danger record-button" data-record="Certificates_record">SSLCert</button>
             <button class="btn btn-warning record-button" data-record="RecRequestMetaData">Web</button>
             <button class="btn btn-primary record-button" data-record="Records">Record</button>
+            <button class="btn btn-primary record-button" data-record="Vulnerabilities">Vulnerabilities</button>
         </div>
-<div>
-    
-
-    {% for key, value in Customer.items %}
-        {% if key == "nmap_products" %}
-            {% for ke,va in value.items %}
-                <a class="product-link" href="{% url 'CustomerPk' Customer.id %}?search={{ ke }}" style="font-size: {{ va|scale_font }}px;">{{ ke }}</a>
+        <div>
+        <button id="generate-docx">Generate Word Document</button>
+                <!-- add copy button for vulntable -->
+        <button id="copy-button">VulnTable Copy</button>
+                <!-- Add this button to your HTML -->
+        <button id="download-table">Download Table</button>
+                <!-- Add this button to your HTML -->
+        <button id="copy-table">Copy Table</button>
+            {% for key, value in Customer.items %}
+                {% if key == "nmap_products" %}
+                    {% for ke,va in value.items %}
+                        <a class="product-link" href="{% url 'CustomerPk' Customer.id %}?search={{ ke }}" style="font-size: {{ va|scale_font }}px;">{{ ke }}</a>
+                    {% endfor %}
+                {% endif %}
             {% endfor %}
-        {% endif %}
-    {% endfor %}
 
-    <style>
-    .product-link {
-        font-weight:bold;
-        font-size: 24px; /* Increase the font size */
-        padding-right: 10px; 
-        transition: transform 0.3s ease-in-out; /* Add a transition effect */
-        color: #003366;
-    }
 
-    .product-link:hover {
-        transform: scale(0.75); /* Shrink the link to 75% of its original size on hover */
-    }
-    .table td {
-        max-width: 300px;
-    }
-    </style>
-</div>
+        </div>
         {% for key, value in Customer.items %}
             {% if key == "customerrecords" %}
                 <div class="bulk_values_customerrecords">
@@ -201,13 +212,201 @@
                             <li><a href="?page={{ page_obj.next_page_number }}">next</a></li>
                         {% endif %}
                     </ul>
-                    <table  class="table table-striped table-bordered">
+                    <div>
+                    <h1>Critical</h1>
+                    {% for y in found_vuln_info_name %}
+                        {% if y.1 and y.1 == 'critical' %}
+                            <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                <button>{{y.0}}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for y in template_info_name %}
+                        {% if y.1 and y.1 == 'critical' %}
+                            <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                <button>{{y.0}}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                    <div>
+                    <h1>High</h1>
+                    {% for y in found_vuln_info_name %}
+                        {% if y.1 and y.1 == 'high' %}
+                            <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                <button>{{y.0}}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for y in template_info_name %}
+                        {% if y.1 and y.1 == 'high' %}
+                            <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                <button>{{y.0}}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+
+                    <div>
+                    <h1>Medium</h1>
+                    {% for y in found_vuln_info_name %}
+                        {% if y.1 and y.1 == 'medium' %}
+                            <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                <button>{{y.0}}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for y in template_info_name %}
+                        {% if y.1 and y.1 == 'medium' %}
+                            <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                <button>{{y.0}}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+
+                    <div>
+                    <h1>Low</h1>
+                    {% for y in found_vuln_info_name %}
+                        {% if y.1 and y.1 == 'low' %}
+                            <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                <button>{{y.0}}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for y in template_info_name %}
+                        {% if y.1 and y.1 == 'low' %}
+                            <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                <button>{{y.0}}</button>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+
+                    <div>
+                    <h1>Informational</h1>
+                        {% for y in template_info_name %}
+                            {{y}}
+                                {% if y.info.name.1 and y.info.severity.1 == 'info' %}
+                                    <a href="{% url 'VulnBoards' %}?q={{y.info.name.0}}">
+                                    <button>{{y.info.name.0}}</button></a>
+                                {% endif %}
+                        {% endfor %}
+
+                    {% for sub_value in value %}
+                        {% for sub_keys, sub_values in sub_value.items %}
+                            {% if sub_keys|in_list:"foundVuln_record" %}
+                                {% for vuln in sub_values %}
+                                    {% for Y in vuln %}
+                                        {% for y in Y %}
+                                            {% if y.info.name.1 and y.info.severity.1 == 'info' %}
+                                                <a href="{% url 'VulnBoards' %}?q={{y.0}}">
+                                                    <button>{{y.0}}</button>
+                                                </a>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                    </div>
+                    </div>
+
+                    <table class="VulnContainer" id="vulnTable" >
+                        <tbody class="vuln">
+                        {% for sub_value in value %}
+                            {% for sub_keys, sub_values in sub_value.items %}
+                                {% if sub_keys|in_list:"foundVuln_record" %}
+                                    {% for vuln in sub_values %}
+                                        <tr class="vulnTrTop" data-record="Vulnerabilities">
+                                            <tr class="vulnTrTop">
+                                                <td class="toptd"><span class="namespan">Name: {{vuln.name}}</span></td>
+                                                <td class="toptd"><span class="topspan">Date: {{vuln.date}}</span></td>
+                                            </tr>
+                                            <tr class="vulnTrMidMid">
+                                                <td class="midtd"><span class="topspan"><span class="blur-text">Location: {{vuln.location}}</span></span></td>
+                                                <td class="midtd"><span class="topspan">Vuln Class: {{vuln.vulnClass}}</span></td>
+                                            </tr>
+                                            <tr class="vulnTrMid">
+                                                {% if vuln.severity == 'info' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="info">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif vuln.severity == 'low' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="low">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif vuln.severity == 'medium' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="medium">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif vuln.severity == 'high' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="high">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif vuln.severity == 'critical' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="critical">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif vuln.severity == 'unknown' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="unknown">Severity: {{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% else %}
+                                                    <td  >{{vuln.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% endif %}
+                                                <td  class="midtd"><span class="topspan">Author: {{vuln.author}}</span></td>
+                                            </tr>
+                                            <tr class="vulnTrMidMid">
+                                                <td class="midtd"><span class="topspan">Match Headers: {{vuln.match_headers}}</span></td>
+                                            </tr>
+                                            <tr class="vulnTrMid">
+                                                <tdclass="midtd"><span class="topspan">Match Bodys: {{vuln.match_bodys}}</span></td>
+                                            </tr> 
+                                        </tr>
+                                    {% endfor %}
+                                {% elif sub_keys|in_list:"Templates_record" %}
+                                    {% for tv in sub_values %}
+                                        <tr class="vulnTrTop" data-record="Templates">
+                                            <tr class="vulnTrTop">
+                                                <td class="toptd"><span class="namespan">Name: <a href="{{tv.info.name}}">{{tv.info.name}}</a></span></td>
+                                                <td class="toptd"><span class="topspan">Date: {{tv.date}}</span></td>
+                                            </tr>
+                                            <tr class="vulnTrMidMid">
+                                                <td class="midtd"><span class="topspan"><span class="blur-text">Location: {{tv.matched_at}}</span></span></td>
+                                                <td class="midtd"><span class="topspan">Tags: {{tv.info.tags}}</span></td>
+                                            </tr>
+                                            <tr class="vulnTrMid">
+                                                {% if tv.info.severity == 'info' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="info">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif tv.info.severity == 'low' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="low">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif tv.info.severity == 'medium' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="medium">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif tv.info.severity == 'high' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="high">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif tv.info.severity == 'critical' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="critical">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% elif tv.info.severity == 'unknown' %} <!-- Accessing nested dictionary -->
+                                                    <td  class="unknown">Severity: {{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% else %}
+                                                    <td  >{{tv.info.severity}}</td> <!-- Accessing nested dictionary -->
+                                                {% endif %}
+                                                <td  class="midtd"><span class="topspan">Author: {{tv.info.author}}</span></td>            
+                                            </tr>
+                                            <tr class="vulnTrMidMid">
+                                                <td class="midtd"><span class="topspan">Description: {{tv.info.description}}</span></td>
+                                            </tr>
+                                            <tr class="vulnTrMid">
+                                                <td class="midtd"><span class="topspan">Reference: {{tv.info.reference}}</span></td>
+                                            </tr>
+                                        </tr>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <table class="table table-striped table-bordered" id="recordsTable">
                         <thead>
                             {% with FLIP=value|get_first %}
-                                    {% for key in FLIP %}
-                                        <th class="text-primary">{{ key }}</th> <!-- Apply Bootstrap class here -->
-                                    {% endfor %}
-                                </tr>
+                                {% for key in FLIP %}
+                                    <th class="text-primary">{{ key }}</th> <!-- Apply Bootstrap class here -->
+                                {% endfor %}
+                            </tr>
                             {% endwith %}
                         </thead>
                         <tbody>
@@ -218,11 +417,17 @@
                                             {% for info in sub_values %}
                                                 <tr data-record="{{ sub_keys }}">
                                                     {% for nes_key, nes_val in info.items %}
+                                                        {% if nes_key != 'id' and nes_key != 'record_id' %}
                                                         <td class="text-truncate">{{nes_val}}</td> <!-- Apply Bootstrap class here -->
+                                                        {% endif %}
                                                     {% endfor %}
                                                 </tr>
                                             {% endfor %}
                                         {% endif %}
+                                    {% elif sub_keys|in_list:"Templates_record"%}
+
+                                    {% elif sub_keys|in_list:"Templates_record"%}
+
                                     {% endif %}
                                 {% endfor %}
                             {% endfor %}
@@ -235,24 +440,99 @@
 
 </div>
 
-
 <!-- javascript -->
 <script>
-    document.querySelectorAll('.record-button').forEach(function(button) {
-        button.addEventListener('click', function() {
-            var recordType = this.getAttribute('data-record');
-            document.querySelectorAll('tbody tr').forEach(function(row) {
-                if (row.getAttribute('data-record') === recordType) {
-                    row.style.display = 'table-row'; // display the row
-                } else {
-                    row.style.display = 'none'; // hide the row
-                }
-            });
+document.querySelectorAll('.record-button').forEach(function(button) {
+    button.addEventListener('click', function() {
+        var recordType = this.getAttribute('data-record');
+        console.log('Button clicked:', recordType); // Log which button was clicked
+        // Get both tables
+        var recordsTable = document.getElementById('recordsTable');
+        var vulnTable = document.getElementById('vulnTable');
+        // Hide both tables
+        recordsTable.style.display = 'none';
+        vulnTable.style.display = 'none';
+        // Hide all rows in the recordsTable
+        recordsTable.querySelectorAll('tr').forEach(function(row) {
+            row.style.display = 'none';
         });
+        // After a short delay, show the table that corresponds to the clicked button
+        setTimeout(function() {
+            if (recordType === 'Vulnerabilities') {
+                vulnTable.style.display = 'table';
+            } else {
+                recordsTable.style.display = 'table';
+                // Show only the rows that match the data-record attribute of the clicked button
+                recordsTable.querySelectorAll('tr[data-record="' + recordType + '"]').forEach(function(row) {
+                    row.style.display = 'table-row';
+                });
+                console.log('Rows shown:', recordsTable.querySelectorAll('tr[data-record="' + recordType + '"]').length); // Log how many rows were shown
+            }
+        }, 100); // 100 millisecond delay
     });
+});
+
+// Add event listener to the download button
+document.getElementById('download-table').addEventListener('click', function() {
+    var recordsTable = document.getElementById('recordsTable');
+    var csv = [];
+    var rows = recordsTable.querySelectorAll('tr');
+
+    for (var i = 0; i < rows.length; i++) {
+        var row = [], cols = rows[i].querySelectorAll('td, th');
+        
+        for (var j = 0; j < cols.length; j++) 
+            row.push(cols[j].innerText);
+        
+        csv.push(row.join(','));        
+    }
+
+    // Create CSV file and download it
+    var csvFile = new Blob([csv.join('\n')], {type: 'text/csv'});
+    var downloadLink = document.createElement('a');
+    downloadLink.download = 'table.csv';
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+});
 </script>
 
 
+<!-- javascript -->
+<script>
+document.querySelectorAll('.record-button').forEach(function(button) {
+    button.addEventListener('click', function() {
+        // ... existing code ...
+    });
+});
+
+// Add event listener to the copy button
+document.getElementById('copy-table').addEventListener('click', function() {
+    var recordsTable = document.getElementById('recordsTable');
+    var range = document.createRange();
+    range.selectNode(recordsTable);
+    window.getSelection().removeAllRanges(); // clear current selection
+    window.getSelection().addRange(range); // to select text
+    document.execCommand("copy");
+    window.getSelection().removeAllRanges(); // to deselect
+    alert("Table copied to clipboard");
+});
+</script>
+
+
+<script>
+document.getElementById('copy-button').addEventListener('click', function() {
+    var range = document.createRange();
+    range.selectNode(document.getElementById('vulnTable'));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+    alert('Content copied to clipboard');
+});
+
+</script>
 
 {% endblock %}
 

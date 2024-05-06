@@ -68,9 +68,8 @@ class TenantInvitation(models.Model):
     ]
     role = models.CharField(max_length=5, choices=ROLE_CHOICES, default='READ')    
     invite_code = models.UUIDField(default=uuid.uuid4, editable=False)
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, null=True)
     invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    last_login = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
         return self.email
@@ -109,14 +108,26 @@ choices_request_methods= [
 
 class EGOAgent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=256, blank=True, null=True)
     hostLocation = models.CharField(max_length=256, blank=True)
-    lastConnect = models.DateField()
+    lastConnect = models.DateField(blank=True, null=True)
     callBackTime = models.IntegerField(default='30')
     bearer_token = models.CharField(max_length=500, blank=True)
     checkin = models.DateTimeField(blank=True, null=True)
     sleep = models.BooleanField(default='False')
     alive = models.BooleanField(default='False')
-    scanning = models.BooleanField(default='False')    
+    scanning = models.BooleanField(default='False')
+
+    @property
+    def is_authenticated(self):
+        # Implement your authentication logic here
+        return True
+
+@receiver(pre_save, sender=EGOAgent)
+def create_bearer_token(sender, instance, **kwargs):
+    if not instance.bearer_token:
+        instance.bearer_token = binascii.hexlify(os.urandom(20)).decode()
+
 
 def user_directory_path(instance, filename):
     # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
@@ -254,19 +265,6 @@ class Nmap(BaseModel):
 ##############################
 ######## Control
 ##############################
-class EGOAgent(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=256, null=True, blank=True)
-    hostLocation = models.CharField(max_length=256, blank=True)
-    lastConnect = models.DateField(auto_now_add=True)
-    callBackTime = models.IntegerField(default='30')
-    alive = models.BooleanField(default='False')
-    scanning = models.BooleanField(default='False')
-    bearer_token = models.CharField(max_length=500, blank=True)
-    @property
-    def is_authenticated(self):
-        # return True if the agent is authenticated, False otherwise
-        return True  # or some condition based on your authentication logic
 
 @receiver(pre_save, sender=EGOAgent)
 def create_bearer_token(sender, instance, **kwargs):
@@ -297,6 +295,7 @@ class GnawControl(BaseModel):
     severity = models.CharField(max_length=256, default='info, low, medium, high, critical, unknown', help_text='<fieldset style="background-color: lightblue;display: inline-block;">please provide, one of the severity options to scan for or use them all. <b>Severity</b>info,</br> low,</br> medium,</br> high,</br> critical,</br> unknown</br></fieldset>')
     Gnaw_Completed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">Used to scan all customers.</fieldset>')
     failed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">An exception occured.</fieldset>')
+    claimed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">The scan has been claimed by an agent.</fieldset>')
     scan_objects = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
     scannedHost = models.JSONField(blank=True, default=list)
     
@@ -337,7 +336,6 @@ class EgoControl(BaseModel):
 
 class MantisControls(BaseModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     NucleiScan = models.BooleanField(default='True')
     Ipv_Scan = models.BooleanField(default='False')
     LoopCustomersBool = models.BooleanField(default='False')
@@ -653,36 +651,3 @@ class Vulnerability(models.Model):
     configurations = models.JSONField()
     references = models.JSONField()
 
-class Description(models.Model):
-    lang = models.CharField(max_length=10)
-    value = models.TextField()
-    vulnerability = models.ForeignKey(Vulnerability, related_name='descriptions', on_delete=models.CASCADE)
-
-class Metric(models.Model):
-    source = models.CharField(max_length=50)
-    type = models.CharField(max_length=50)
-    cvss_data = models.JSONField()
-    base_severity = models.CharField(max_length=50)
-    exploitability_score = models.FloatField()
-    impact_score = models.FloatField()
-    ac_insuf_info = models.BooleanField()
-    obtain_all_privilege = models.BooleanField()
-    obtain_user_privilege = models.BooleanField()
-    obtain_other_privilege = models.BooleanField()
-    user_interaction_required = models.BooleanField()
-    vulnerability = models.ForeignKey(Vulnerability, related_name='metrics', on_delete=models.CASCADE)
-
-class Weakness(models.Model):
-    source = models.CharField(max_length=50)
-    type = models.CharField(max_length=50)
-    description = models.JSONField()
-    vulnerability = models.ForeignKey(Vulnerability, related_name='weaknesses', on_delete=models.CASCADE)
-
-class Configuration(models.Model):
-    nodes = models.JSONField()
-    vulnerability = models.ForeignKey(Vulnerability, related_name='configurations', on_delete=models.CASCADE)
-
-class Reference(models.Model):
-    url = models.URLField()
-    source = models.CharField(max_length=50)
-    vulnerability = models.ForeignKey(Vulnerability, related_name='references', on_delete=models.CASCADE)

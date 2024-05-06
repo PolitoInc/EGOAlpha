@@ -27,10 +27,13 @@ import dask.array as dd
 from nested_lookup import nested_delete
 import datetime
 import uuid
+# process manager
+from multiprocessing import Manager
+
 # custom imports
 
 import EgoSettings
-
+from multiprocessing import Process
 #from dask.distributed import Client, progress
 import numpy as np
 import time
@@ -588,9 +591,19 @@ def update_agent_checkin(agent_id, auth_token_json):
         headers.update(auth_token_json)
     # Prepare the data with the current date and time
     dt = datetime.datetime.now()
-    data = {"checkin": dt.strftime('%Y-%m-%d %H:%M:%S')}
+    # Format it as a string
+    dt_string = dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Now you can use dt_string in your Django model
+    data = {"checkin": dt_string}
+    
+    data = json.dumps(data)
+    print(data)
+    print(url)
+    print(headers)
     # Send the PATCH request
-    response = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
+    response = requests.patch(url, data=data, headers=headers, verify=False)
+    
     return response.json()
 
 def update_AgentControl(ego_id, agent_id, auth_token_json):
@@ -623,23 +636,16 @@ def register_and_update_agent(auth_token_json=None):
     response_store = []
     agent_response_store = []
     for response in responses:
-        if response.get('egoAgent') is None and not response.get('Gnaw_Completed', False):
-            # Check if egoAgent.txt exists
-            if os.path.exists('egoAgent.txt'):
-                with open('egoAgent.txt', 'r') as file:
-                    EgoSettings.egoAgent = file.read().strip()
-            else:
-                # If EgoSettings.egoAgent is not set, create a new EGOAgent instance
-                data = {}  # Add necessary data here
-                agent_response = create_EGOAgent(data, auth_token_json)
-                agent_id = agent_response.get('id')  # Assuming the response contains an 'id' key
-                # Update EgoSettings.egoAgent with the new agent's ID
-                EgoSettings.egoAgent = agent_id
-                # Remove special characters and spaces from the string
-                EgoSettings.egoAgent = re.sub(r'\W+', '', str(EgoSettings.egoAgent))
-                # Write the new agent's ID to egoAgent.txt
-                with open('egoAgent.txt', 'w') as file:
-                    file.write(EgoSettings.egoAgent)
+        if not response.get('Gnaw_Completed', False):
+            # If EgoSettings.egoAgent is not set, create a new EGOAgent instance
+            data = {}  # Add necessary data here
+            agent_response = create_EGOAgent(data, auth_token_json)
+            agent_id = agent_response.get('id')  # Assuming the response contains an 'id' key
+            # Update EgoSettings.egoAgent with the new agent's ID
+            EgoSettings.egoAgent = agent_id
+            # Remove special characters and spaces from the string
+            EgoSettings.egoAgent = re.sub(r'\W+', '', str(EgoSettings.egoAgent))
+
             # Update the GnawControl instance with the new agent's ID
             ego_id = response.get('id')  # Assuming the response contains an 'id' key
             update_AgentControl(ego_id, EgoSettings.egoAgent, auth_token_json)
@@ -649,6 +655,7 @@ def register_and_update_agent(auth_token_json=None):
             response_store.append(response)
             agent_response_store.append(agent_response)
     return response_store, agent_response_store
+
 
 def update_gnaw_control(sub_domain, ego_id, auth_token_json):
     try:
@@ -666,21 +673,12 @@ def update_gnaw_control(sub_domain, ego_id, auth_token_json):
         print(E)
 
 
-def gnaw():
-    # Check for new items to scan
-    cpuCount = round(os.cpu_count())
-    print(f'cpu {cpuCount}')
-    auth_token_json = {"Authorization": f"Bearer {EgoSettings.api_accessKey}"}
-    responseEgo, responseAgent = register_and_update_agent(auth_token_json)
-    print('responseEgo',responseEgo)
-    print('responseAgent',responseAgent)
+def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
+
     # After registering and updating the agent
-    agent_id = EgoSettings.egoAgent
-# Update the agent's checkin    
-    print('update_agent_checkin')
+    agent_id = EgoSettings.egoAgentId 
+# Update the agent's checkin
     update_agent_checkin(agent_id, auth_token_json)
-    print('update_agent_checkin2')
-    time.sleep(15)    
     responseEgo = responseEgo
     if responseEgo is None:
         print("No empty egoAgent found.")
@@ -798,9 +796,9 @@ def gnaw():
                     request = requests.patch(gnaw_url, data=recs, headers=headers, verify=False)
                     response = request.json()                    
                 else:
-
+                    print(CUSTOMERS)
                     getRecords= get_request(CUSTOMERS, auth_token_json)
-                    rjson= json.loads(getRecords.text)
+                    rjson= json.loads(getRecords.content)
                     OutOfScopeString = rjson['OutOfScopeString']
                     RecordsCheck= rjson["customerrecords"]
                     FullDomainNameSeensIt= set()
@@ -867,23 +865,100 @@ def gnaw():
         # Send the PATCH request
         response = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
         print('done record ')
-    return 'Done'
+    return_dict[os.getpid()] = 'Done'
+    return return_dict
 
-from multiprocessing import Process
+def update_AgentControl(ego_id, agent_id, auth_token_json):
+    # Get the current list of UUIDs in the 'egoAgent' field
+    headers = {"Content-type": "application/json", "Accept": "application/json"}
+    headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleeWbKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"})
+    if auth_token_json:
+        headers.update(auth_token_json)
+    # Update the 'egoAgent' field with the new list
+    url_patch = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
+    data = {
+        'egoAgentID': agent_id,
+    }
+    rjson = json.dumps(data)
+    response_patch = requests.patch(url_patch, data=rjson, headers=headers, verify=False)
+    return response_patch
+
+def update_ClaimedControl(ego_id, agent_id, auth_token_json):
+    # Get the current list of UUIDs in the 'egoAgent' field
+    headers = {"Content-type": "application/json", "Accept": "application/json"}
+    headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleeWbKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"})
+    if auth_token_json:
+        headers.update(auth_token_json)
+    # Update the 'egoAgent' field with the new list
+    url_patch = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
+    data = {
+        'claimed': True,
+    }
+    rjson = json.dumps(data)
+    response_patch = requests.patch(url_patch, data=rjson, headers=headers, verify=False)
+    return response_patch
+
+def update_engine(auth_token_json, return_dict):
+    Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/"
+    request = get_request(Url_EgoControls, auth_token_json)
+    responses = request.json()
+    response_store = []
+    agent_response_store = []
+    for response in responses:
+        claimed = response.get('claimed', False)
+        if not response.get('Gnaw_Completed', False):
+            if claimed == True:
+                pass
+            else:
+                # If EgoSettings.egoAgent is not set, create a new EGOAgent instance
+                data = {}  # Add necessary data here
+                agent_response = create_EGOAgent(data, auth_token_json)
+                agent_id = agent_response.get('id')  # Assuming the response contains an 'id' key
+                # Update EgoSettings.egoAgent with the new agent's ID
+                EgoSettings.egoAgent = agent_id
+                # Remove special characters and spaces from the string
+                EgoSettings.egoAgent = re.sub(r'\W+', '', str(EgoSettings.egoAgent))
+
+                # Update the GnawControl instance with the new agent's ID
+                ego_id = response.get('id')  # Assuming the response contains an 'id' key
+                update_AgentControl(ego_id, EgoSettings.egoAgent, auth_token_json)
+                Url_EgoControls = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
+                request = get_request(Url_EgoControls, auth_token_json)
+                response = request.json()    
+                response_store.append(response)
+                agent_response_store.append(agent_response)
+            
+                gnaw(auth_token_json, response, agent_response_store, return_dict)
+                time.sleep(12)  # Add a delay of 1 second between each request
+                update_agent_checkin(ego_id, agent_id, auth_token_json)
+                update_ClaimedControl(ego_id, agent_id, auth_token_json)
+    return return_dict
 
 if __name__ == "__main__":
     processes = []
+    cpuCount = 3  # Limit the number of processes to 3
+    print(f'cpu {cpuCount}')
+    auth_token_json = {"Authorization": f"Bearer {EgoSettings.api_accessKey}"}
+
+    # Create a Manager dictionary to share data between processes
+    manager = Manager()
+    return_dict = manager.dict()
+
     while True:
-        # If there are less than 3 gnaw functions running, start a new one
-        if len(processes) < 3:
-            p = Process(target=gnaw)
+        # If there are less than cpuCount gnaw functions running, start a new one
+        if len(processes) < cpuCount:
+            p = Process(target=update_engine, args=(auth_token_json, return_dict))
             p.start()
             processes.append(p)
         else:
-            # If there are 3 gnaw functions running, wait for one to finish
+            # If there are cpuCount gnaw functions running, wait for one to finish
             for p in processes:
+                p.join(120)  # Wait for the process to finish for 2 minutes
                 if not p.is_alive():
                     processes.remove(p)
+                    # If the output of the gnaw function is 'Done', wait for 30 seconds
+                    if return_dict.get(p.pid) == 'Done':
+                        time.sleep(30)
                     break
             # Sleep for a while to prevent CPU overload
-            time.sleep(1)
+            time.sleep(12)

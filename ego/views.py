@@ -111,12 +111,15 @@ class UserProfileView(View):
                 # Query all users in the admin group
                 admin_users = UserProfile.objects.filter(role='ADMIN')
                 # Query all group invitations
-                tenant_invitations = TenantInvitation.objects.all()
+                try:
+                    tenant_invitations = TenantInvitation.objects.all()
+                except TenantInvitation.DoesNotExist:
+                    tenant_invitations = []
             else:
                 form = UserProfileForm(instance=user_profile)
                 tenant_invitation_form =  TenantInvitationForm()
                 admin_users = None
-                tenant_invitations = None
+                tenant_invitations = []
             return TemplateResponse(request, 'Account/account.html', {
                 'form': form, 
                 'tenant_invitation_form': tenant_invitation_form,
@@ -273,74 +276,68 @@ class Verify2FAView(APIView):
 
 #registration
 
-
-@login_required
-@permission_required('app.add_item', raise_exception=True)
 def register(request):
     
     if request.method == 'POST':
         # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
-        user_profile = UserProfile.objects.get(user=request.user)
-        if user_profile.role not in ['WRITE', 'ADMIN']:
-            return HttpResponseForbidden('You do not have permission to perform this action')
-        else:
-            form = CustomUserCreationForm(request.POST)
-            if form.is_valid():
-                email = form.cleaned_data.get('email')
-                if User.objects.filter(email=email).exists():
-                    messages.error(request, 'Registration Failed: Email already in use.')
-                    return render(request, 'auth/register.html', {'form': form})
-                else:
-                    token = request.GET.get('token', None)  # Get the token parameter from the URL
-                    tenant_invitation = None
-                    if token:
-                        # Look up the TenantInvitation with the provided token
-                        try:
-                            tenant_invitation = TenantInvitation.objects.filter(token=token).first()
-                        except:
-                            tenant_invitation = None
-                    else:
-                        secret_code = form.cleaned_data.get('secret_code')
-                        if secret_code == 'SECRET_CODE':  # Replace with your secret code                
-                            with transaction.atomic():
-                                # Create User
-                                user = User.objects.create_user(
-                                    username=form.cleaned_data.get('username'),
-                                    password=form.cleaned_data.get('password1'),
-                                    email=form.cleaned_data.get('email')
-                                )
 
-                                if tenant_invitation:
-                                    # Create Tenant from TenantInvitation
-                                    tenant = Tenant.objects.create(name=tenant_invitation.tenant_name)
-                                    # Delete the TenantInvitation since it has been used
-                                    tenant_invitation.delete()
-                                else:
-                                    # Fallback to secret code mechanism
-                                    tenant_name = form.cleaned_data.get('tenant')
-                                    tenant = Tenant.objects.create(name=tenant_name)
-
-                                    # Create UserProfile
-                                    UserProfile.objects.create(
-                                        user=user,
-                                        tenant=tenant,
-                                        role='ADMIN',
-                                        email=form.cleaned_data.get('email')
-                                    )        
-                            # login user before redirecting
-                            login(request, user)
-                            messages.success(request, 'Registration Succeeded')
-                            return redirect('/two-fa-register-page')  # Redirect to the 2FA page
-                        else:
-                            messages.error(request, 'Registration Failed: Invalid secret code.')
-                            return render(request, 'auth/register.html', {'form': form})
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data.get('email')
+            if User.objects.filter(email=email).exists():
+                messages.error(request, 'Registration Failed: Email already in use.')
+                return render(request, 'auth/register.html', {'form': form})
             else:
+                token = request.GET.get('token', None)  # Get the token parameter from the URL
+                tenant_invitation = None
+                if token:
+                    # Look up the TenantInvitation with the provided token
+                    try:
+                        tenant_invitation = TenantInvitation.objects.filter(token=token).first()
+                    except:
+                        tenant_invitation = None
+                else:
+                    secret_code = form.cleaned_data.get('secret_code')
+                    if secret_code == 'SECRET_CODE':  # Replace with your secret code                
+                        with transaction.atomic():
+                            # Create User
+                            user = User.objects.create_user(
+                                username=form.cleaned_data.get('username'),
+                                password=form.cleaned_data.get('password1'),
+                                email=form.cleaned_data.get('email')
+                            )
+
+                            if tenant_invitation:
+                                # Create Tenant from TenantInvitation
+                                tenant = Tenant.objects.create(name=tenant_invitation.tenant_name)
+                                # Delete the TenantInvitation since it has been used
+                                tenant_invitation.delete()
+                            else:
+                                # Fallback to secret code mechanism
+                                tenant_name = form.cleaned_data.get('tenant')
+                                tenant = Tenant.objects.create(name=tenant_name)
+
+                                # Create UserProfile
+                                UserProfile.objects.create(
+                                    user=user,
+                                    tenant=tenant,
+                                    role='ADMIN',
+                                    email=form.cleaned_data.get('email')
+                                )        
+                        # login user before redirecting
+                        login(request, user)
+                        messages.success(request, 'Registration Succeeded')
+                        return redirect('/two-fa-register-page')  # Redirect to the 2FA page
+                    else:
+                        messages.error(request, 'Registration Failed: Invalid secret code.')
+                        return render(request, 'auth/register.html', {'form': form})
+        else:
                 messages.error(request, 'Registration Failed: Please fix form errors.')
 
     else:
         form = CustomUserCreationForm()
 
-    return render(request, 'auth/register.html', {'form': form})
+        return render(request, 'auth/register.html', {'form': form})
 
 class InvitationView(View):
     def get(self, request, uidb64, token):
@@ -423,63 +420,57 @@ def get_domain_values(domain):
     SUBDOMAIN= tldExtracted.subdomain
     return {"suffix": SUFFIX, "DOMAIN": DOMAIN,"SUBDOMAIN": SUBDOMAIN}
 
-@login_required
-def wordCreation(request):
-    if request.method == 'GET':
-        print('error')
-    else:
-        # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
-        user_profile = UserProfile.objects.get(user=request.user)
-        if user_profile.role not in ['WRITE', 'ADMIN']:
-            return HttpResponseForbidden('You do not have permission to perform this action')
-        else:
-            name = 'SupremeWordList'
-            WordList = DirectoryListingWordListSerializer()
-            try:
-                WordList = WordList[name]
-            except:
-                WordList = False
-            if WordList:
-                Words = WordList['WordList']
-                records = RecordSerializer()
-            else:
-                Subdomains = Record.objects.values_list('subDomain', flat=True)
-                print(Subdomains)
-                records_stored = {}
-                records_stored = {}
-                totalCount = len(Subdomains)
-                domains = []
-                subDomains= []
-                Domain_Data_Set = {"subDomainCount": len(subDomains), "domainCount": len(domains), "totalCount": totalCount, "domainData": []}
-                dataSet_wordlistgroup = {"groupName": name, "type": "DNS", "description": f"the {name} is the self maintaining growing and learning list of found subdomains that will help with future discoveries.","count": 0}
-                for rec in Subdomains:
-                    records_stored.add(rec['subDomain'])
-                    domain = rec['subDomain']
-                    tldExtracted= tldextract.extract(domain)
-                    SUFFIX= tldExtracted.suffix
-                    DOMAIN= tldExtracted.domain
-                    SUBDOMAIN= tldExtracted.subdomain
-                    dataSet_WordList = {"type": "DNS", "Value": SUBDOMAIN, "Occurance": 1, "foundAt": [DOMAIN.SUFFIX]}
-                    print(domain)
-                return TemplateResponse(requests, 'Vulns/explore.html', {"customers": customers})
 
 @login_required
-def fileUpload(request):
-    if request.method == 'POST' and request.FILES['uploaded_file']:
-        # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
-        user_profile = UserProfile.objects.get(user=request.user)
-        if user_profile.role not in ['WRITE', 'ADMIN']:
-            return HttpResponseForbidden('You do not have permission to perform this action')
-        else:
+def WordClassBulkCreate(request, pk):
+    print("WordClassBulkCreate called with pk:", pk)
+    word_list_group = get_object_or_404(WordListGroup, pk=pk)
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
             uploaded_file = request.FILES['uploaded_file']
-            fs = FileSystemStorage()
-            filename = fs.save(uploaded_file.name, uploaded_file)
-            filename = fs.url(filename)
-            return render(request, 'WordList/WordClass.html', {
-                'filename': filename
-            })
+
+            # Read the file directly from the UploadedFile object
+            lines = uploaded_file.readlines()
+
+            # Create a WordList for each line in the file
+            for line in lines:
+                word_list = WordList.objects.create(
+                    WordList=word_list_group,
+                    type='DNS',
+                    Value=line.strip(),  # Remove trailing newline
+                    Occurance=1,
+                    foundAt=[line.strip()]  # Remove trailing newline
+                )
+                print("Created WordList:", word_list)
+
+            return redirect('WordClassCreate')
+        else:
+            return HttpResponseBadRequest('No file was uploaded')
     else:
-        return render(request, 'WordList/WordClass.html', {})
+        form = UploadFileForm()
+        return render(request, 'WordList/WordClassCreate.html', {'form': form})
+
+
+@login_required
+def WordClass(request):
+    WordList = WordListGroup.objects.all()
+    form = WordListGroupFormCreate()
+    return TemplateResponse(request, "WordList/WordClass.html", {"WordList": WordList, "form": form})
+
+@login_required
+def WordClassCreate(request):
+    # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
+    user_profile = UserProfile.objects.get(user=request.user)
+    if user_profile.role not in ['WRITE', 'ADMIN']:
+        return HttpResponseForbidden('You do not have permission to perform this action')
+    else:
+        WordList = WordListGroup.objects.all()
+        if request.method == 'POST':
+            form = WordListGroupFormData(request.POST or None)
+            if form.is_valid():
+                form.save()
+        return HttpResponseRedirect(f"/WordList/")
 
 # Views
 @login_required
@@ -554,7 +545,7 @@ def CustomersCreateurl(request, format=None):
         user_profile = UserProfile.objects.get(user=request.user)
         if user_profile.role not in ['WRITE', 'ADMIN']:
             return HttpResponseForbidden('You do not have permission to perform this action')
-        else:        
+        else:
             form = SimpleCustomersFormCreate(request.POST)
             if form.is_valid():
                 form.save()
@@ -570,7 +561,7 @@ def CustomerPkDelete(request, pk, format=None):
         customer = get_object_or_404(Customers, pk=pk)
         records = Record.objects.filter(customer_id=customer)
         records.delete()
-        return JsonResponse({'status': 'success'}, status=204)
+        return JsonResponse({'status': 'success'}, status=204)  
     
 #retrieve customer record
 @login_required
@@ -580,7 +571,20 @@ def CustomerPk(request, pk, format=None):
         form = SimpleCustomersFormCreate(instance=customer)
         serializer = CustomerRecordSerializer(customer)
         data = serializer.data
-        # get longitude and latitude from nested records from GEOCODES
+
+        template_info_name = [ ]
+        found_vuln_info_name = []
+        setFoundVuln = []
+        setTemplate = []
+
+        for y in customer.customerrecords.all():
+            if y == 'Templates_record':
+                for x in y:
+                    print(x.name)
+                    template_info_name.append(x.name)
+            found_vuln_info_name.append(y)
+
+        # Continue with the rest of the CustomerPk logic
         Map_Generation = request.GET.get('mapcreate', None)
         if Map_Generation:
             whois_customers= whois.objects.filter(customer_id=pk)
@@ -589,7 +593,6 @@ def CustomerPk(request, pk, format=None):
                     print(x.map_image)
                     print('map')
                     location = get_latitude_location(x.country, x.city)
-                    print(location)
                     if location != None:
                         map = folium.Map(location=location, zoom_start=5)
                         name = f"img{x.id}.html"
@@ -598,32 +601,31 @@ def CustomerPk(request, pk, format=None):
                             file_data = File(f)
                             x.map_image = file_data
                             # Assuming `customer` is a Django model instance
-                            x.map_image.save(name, file_data, save=True) 
-
-        # Filter out records where 'alive' is False
+                            x.map_image.save(name, file_data, save=True)
         alive_records = [record for record in data['customerrecords'] if record['alive']]
-     
-     # If search query is provided in GET request, filter the records
+
         search_query = request.GET.get('search', None)
         if search_query:
             alive_records = [x for x in alive_records if search_query in str(x)]
-        # Perform pagination on the nested field value 'customer_records'
+
         paginator = Paginator(alive_records, 100)  # Show 20 records per page
-
-        # Get the page number from the GET request. If no page number is provided, default to 1
         page_number = request.GET.get('page', 1)
-
-        # Get the data for the requested page
         try:
             page_obj = paginator.page(page_number)
         except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
             page_obj = paginator.page(paginator.num_pages)
 
-        # Merge paginated 'customer_records' back into data
         data['customerrecords'] = [record for record in page_obj.object_list]
-
-        return TemplateResponse(request, "Customers/customersPK.html", {"Customer": data, "form": form, 'page_obj': page_obj})
+        print('template_info_name1',template_info_name)
+        return TemplateResponse(request, "Customers/customersPK.html", {
+            "Customer": data, 
+            "form": form, 
+            'page_obj': page_obj,
+            "Vulns": setFoundVuln, 
+            "Template": setTemplate, 
+            "template_info_name": template_info_name, 
+            "found_vuln_info_name": found_vuln_info_name, 
+        })
 
     elif request.method == 'POST':
         # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
@@ -642,8 +644,8 @@ def CustomerPk(request, pk, format=None):
         form = SimpleCustomersFormCreate(instance=customer)
     return TemplateResponse(request, 'Customers/customersPK.html', {'form': form})
 
-@login_required
 
+@login_required
 def Interconneciton(request, pk):
     results = get_object_or_404(Customers, pk=pk)
     #record = CustomersViewSet(results)
@@ -1036,25 +1038,6 @@ def Vulnerabilty(request):
 
 #def MantisControlsApp(requests):
 
-@login_required
-def WordClass(request):
-    WordList = WordListGroup.objects.all()
-    form = WordListGroupFormCreate()
-    return TemplateResponse(request, "WordList/WordClass.html", {"WordList": WordList, "form": form})
-
-@login_required
-def WordClassCreate(request):
-    # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
-    user_profile = UserProfile.objects.get(user=request.user)
-    if user_profile.role not in ['WRITE', 'ADMIN']:
-        return HttpResponseForbidden('You do not have permission to perform this action')
-    else:
-        WordList = WordListGroup.objects.all()
-        if request.method == 'POST':
-            form = WordListGroupFormData(request.POST or None)
-            if form.is_valid():
-                form.save()
-        return HttpResponseRedirect(f"/WordList/")
 
 def check_totalcpe_in_vulnerability(TOTALCPE, vulnerability):
     for configuration in vulnerability.configurations.all():
@@ -1742,11 +1725,11 @@ class whoisRetrieveViewSet(BaseView, generics.RetrieveUpdateDestroyAPIView):
 
 class EGOAgentListCreateView(BaseView,generics.ListCreateAPIView):
     queryset = EGOAgent.objects.all()
-    serializer_class = PythonMantisSerializer
+    serializer_class = EGOAgentSerializer
 
 class EGOAgentRetrieveUpdateDestroyView(BaseView,generics.RetrieveUpdateDestroyAPIView):
     queryset = EGOAgent.objects.all()
-    serializer_class = PythonMantisSerializer
+    serializer_class = EGOAgentSerializer
     
 class EgoControlListViewSet(BaseView, generics.ListAPIView):
     serializer_class = EgoControlSerializer
