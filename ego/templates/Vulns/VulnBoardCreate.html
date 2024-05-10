@@ -7,9 +7,10 @@
 {% endblock %}
 {% block content %}
         <div class="_Create">
-                <form action="/VulnBoard/create/delete/{{ res.id}}" method="GET">
+                <form action="/VulnBoard/create/0" method="POST">
                 {% csrf_token %}
-                {% for field in form %}
+.
+{% for field in form %}
                 <div class="form-group">
             <label for="{{ field.id_for_label }}" class="egolabel">
                 {{ field.label }}

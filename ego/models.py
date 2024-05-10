@@ -54,7 +54,8 @@ class UserProfile(models.Model):
     ]
     role = models.CharField(max_length=5, choices=ROLE_CHOICES, default='READ')
     email_invite_code = models.CharField(max_length=100, null=True, blank=True)
-
+    FastPassHost = models.CharField(max_length=100, null=True, blank=True)
+    FastPassPort = models.CharField(max_length=100, null=True, blank=True)
     def __str__(self):
         return self.user.username
 
@@ -295,7 +296,7 @@ class GnawControl(BaseModel):
     severity = models.CharField(max_length=256, default='info, low, medium, high, critical, unknown', help_text='<fieldset style="background-color: lightblue;display: inline-block;">please provide, one of the severity options to scan for or use them all. <b>Severity</b>info,</br> low,</br> medium,</br> high,</br> critical,</br> unknown</br></fieldset>')
     Gnaw_Completed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">Used to scan all customers.</fieldset>')
     failed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">An exception occured.</fieldset>')
-    claimed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">The scan has been claimed by an agent.</fieldset>')
+    claimed = models.BooleanField(default='False', help_text='<fieldset style="background-color: lightblue;display: inline-block;">The scan has been claimed by an agent.</fieldset>', blank=True)
     scan_objects = fields.ArrayField(models.CharField(max_length=256), blank=True, default=list)
     scannedHost = models.JSONField(blank=True, default=list)
     
@@ -614,6 +615,10 @@ class PythonMantis(BaseModel):
     vulnCard_id= models.ForeignKey(VulnCard, on_delete=models.CASCADE, related_name='PythonMantis_record')
     Elevate_Vuln = models.CharField(max_length=256, blank=True)
     name = models.CharField(max_length=256, null=True)
+    searchPort = ArrayField(models.CharField(max_length=5), blank=True)
+    searchHeader = ArrayField(models.CharField(max_length=512), blank=True)
+    searchBody = ArrayField(models.CharField(max_length=512), blank=True)
+    searchNmap = ArrayField(models.CharField(max_length=512), blank=True)
     callbackServer =  models.CharField(max_length = 2048, default='http://127.0.0.1')
     callbackServerKey = models.CharField(max_length = 2048, blank=True)
     request_method = models.CharField(max_length=7, blank=True, null=True)
@@ -651,3 +656,69 @@ class Vulnerability(models.Model):
     configurations = models.JSONField()
     references = models.JSONField()
 
+##############################
+##### data systems
+##############################
+
+class AD(models.Model):
+    ProjectName = models.CharField(max_length=100)
+
+class Domain(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    AD = models.ForeignKey(AD, on_delete=models.CASCADE)
+
+class User(models.Model):
+    username = models.CharField(max_length=100)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE)
+
+class Computer(models.Model):
+    name = models.CharField(max_length=100)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE)
+
+class Group(models.Model):
+    name = models.CharField(max_length=100)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE)
+    users = models.ManyToManyField(User)
+
+class OU(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE)
+    blocksinheritance = models.BooleanField(default=False)
+    ACLProtected = models.BooleanField(default=False)
+    users = models.ManyToManyField(User)
+    computers = models.ManyToManyField(Computer)
+    child_ous = models.ManyToManyField('self')
+    groups = models.ManyToManyField(Group)
+
+class GPO(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE)
+
+class Ace(models.Model):
+    PrincipalSID = models.CharField(max_length=255)
+    PrincipalType = models.CharField(max_length=255)
+    RightName = models.CharField(max_length=255)
+    AceType = models.CharField(max_length=255)
+    IsInherited = models.BooleanField(default=False)
+    ou = models.ForeignKey(OU, on_delete=models.CASCADE)
+
+class ResponderSession(models.Model):
+    id = models.AutoField(primary_key=True)
+    Session = models.CharField(max_length=255)
+    Date = models.DateTimeField()
+    ResponderVersion = models.CharField(max_length=255)
+    ResponderAuthor = models.CharField(max_length=255)
+    ad = models.ForeignKey(AD, on_delete=models.CASCADE, related_name='responder_sessions')
+
+class LLMNR(models.Model):
+    id = models.AutoField(primary_key=True)
+    Session = models.ForeignKey(ResponderSession, on_delete=models.CASCADE)
+    Date = models.DateTimeField()
+    Request_Name = models.CharField(max_length=255)
+    Poisoned_Answer = models.CharField(max_length=255)
+    Requester_IP = models.CharField(max_length=255)
+    Requester_MAC = models.CharField(max_length=255)
+    Poisoned_IP = models.CharField(max_length=255)

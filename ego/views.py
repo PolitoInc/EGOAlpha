@@ -118,7 +118,7 @@ class UserProfileView(View):
             else:
                 form = UserProfileForm(instance=user_profile)
                 tenant_invitation_form =  TenantInvitationForm()
-                admin_users = None
+                admin_users = user_profile
                 tenant_invitations = []
             return TemplateResponse(request, 'Account/account.html', {
                 'form': form, 
@@ -136,6 +136,7 @@ class UserProfileView(View):
         tenant_invitation_form = None
         if user_profile.role == 'ADMIN':
             tenant_invitation_form = TenantInvitationForm(request.POST)  # Assuming you have a TenantInvitationForm
+            tenant_update_form = UserProfileForm(request.POST, instance=user_profile)
             if tenant_invitation_form.is_valid():
                 tenant_invitation = tenant_invitation_form.save(commit=False)  # Don't save the TenantInvitation instance yet
                 tenant_invitation.tenant = user_profile.tenant  # Set the tenant field to the tenant of the user who is creating the invitation
@@ -166,6 +167,9 @@ class UserProfileView(View):
                     [tenant_invitation.email],
                     fail_silently=False,
                 )
+                return HttpResponseRedirect(reverse_lazy('user_profile'))
+            elif tenant_update_form.is_valid():
+                tenant_update_form.save()
                 return HttpResponseRedirect(reverse_lazy('user_profile'))
             else:
                 return TemplateResponse(request, 'Account/account.html', {'tenant_invitation_form': tenant_invitation_form})
@@ -548,7 +552,17 @@ def CustomersCreateurl(request, format=None):
         else:
             form = SimpleCustomersFormCreate(request.POST)
             if form.is_valid():
-                form.save()
+                customer = form.save()
+                if form.cleaned_data.get('FastPass'):
+                    EgoControl.objects.create(
+                        ScanGroupingProject=customer.groupingProject,
+                        ScanProjectByName=customer.nameProject,
+                        ScanProjectByID=customer.id,
+                        HostAddress=user_profile.FastPassHost,
+                        Port=user_profile.FastPassPort,
+                        crtshSearch_bool='True',
+                        Scan_DomainName_Scope_bool='True',
+                    )
                 return HttpResponseRedirect('/Customers/Create')
     else:
         form = SimpleCustomersFormCreate()
@@ -681,7 +695,6 @@ def Interconneciton(request, pk):
         return JsonResponse(data={"data": data, "labels": labels})
 
 @login_required
-
 def VulnsBoardChartPK(request, pk):
     results = get_object_or_404(Customers, pk=pk)
     #record = CustomersViewSet(results)
@@ -719,7 +732,6 @@ def VulnsBoardChartPK(request, pk):
         return JsonResponse(data={"data": data, "labels": labels})
 
 @login_required
-
 def RecordDelete(request, pk):
     # Only users with the 'WRITE' or 'ADMIN' role can use the POST method
     user_profile = UserProfile.objects.get(user=request.user)
@@ -814,6 +826,7 @@ def EgoControlBoardpk(request, pk):
     else:
         form = create_egocontrol(instance=results)
     return TemplateResponse(request, 'EgoControl/EgoControlBoardpk.html', {"control": results, "form":form})
+
 #VULNS 
 # list vulns found
 @login_required
@@ -840,13 +853,20 @@ def VulnBoards(request):
                                                                    "count": count
                                                                    })
 
+#VULNS 
+# list vulns found
+@login_required
+def VulnBoardsearch(request):
+    data = PythonMantis.objects.all()
+    return TemplateResponse(request, f'Vulns/VulnTemplates.html', {"data":data})
+
 # create mantis controls
 @login_required
-def VulnBoardCreate(request):
+def mantiscreate(request):
     context ={}
     mantis = PythonMantis.objects.all()
     cards = VulnCard.objects.all()
-    form = create_mantiscontrol()
+    form = MantisDataCreate()
     formdata = MantisDataCreate()
     if request.method == 'GET':
         form = MantisDataCreate(request.POST or None)
@@ -877,10 +897,10 @@ def VulnBoardDeletePK(request, pk):
     return HttpResponseRedirect(f'/VulnBoard/create/')
 
 @login_required
-def VulnBoardCreatePK(request, pk):
+def mantiscreatePK(request, pk):
     context ={}
     mantis = PythonMantis.objects.get(pk=pk)
-    form = create_mantiscontrol()
+    form = MantisDataCreate()
     #cards = VulnCard.objects.get(pk=uuid.UUID(mantis.vulnCard_id))
     if request.method == 'GET':
         form = MantisDataCreate(instance=mantis)

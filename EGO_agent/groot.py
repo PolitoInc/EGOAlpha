@@ -362,14 +362,10 @@ def brain_word_comprehension(data, record_id, HostAddress=EgoSettings.HostAddres
                 print(json.loads(postRecords.content))
         else:
             itype= type(i)
-            print('i not template', i, f'type {itype}')
             #words = replace_strings(i)
             wordsList = re.split(' ', i)
             itype= type(wordsList)
-            print('i not template wordsList', wordsList, f'type {itype}')
             if len(wordsList) == 6:
-                print('hereerererereererererereer')
-                print(f'length is 6')
                 DIC= {}
                 date_nuclei= f'{wordsList[0]} {wordsList[1]}'
                 date= dict.fromkeys(['date'], date_nuclei)
@@ -382,26 +378,18 @@ def brain_word_comprehension(data, record_id, HostAddress=EgoSettings.HostAddres
                 vulnerable_nuclei= wordsList[5]
                 vulnerable= dict.fromkeys(['vulnerable'], vulnerable_nuclei)
                 DIC.update(date)
-                print(f'DIC date  {DIC}')
                 DIC.update(name)
-                print(f'DIC name  {DIC}')
                 DIC.update(method)
-                print(f'DIC method  {DIC}')
                 DIC.update(severity)
-                print(f'DIC severity  {DIC}')
                 DIC.update(vulnerable)
-                print(f'dic {DIC}')
                 Nuclei_id = dict.fromkeys(['nuclei'], record_id)
                 Nuclei_id.update(DIC) 
                 certificateurlPost= f"{HostAddress}:{Port}/api/Nuclei/"
-                recs= json.dumps(Nuclei_id)
-                print('recs  ',certificateurlPost,  recs)
+                recs= json.dumps(Nuclei_id) 
                 if auth_token_json:
                     headers.update(auth_token_json)
                 postRecords = requests.post(certificateurlPost, data=(recs), headers=headers, verify=False)
             elif len(wordsList) == 7:
-                print('hereerererereererererereer')
-                print(f'length is 7 == {len(wordsList)} {wordsList}')
                 DIC= {}
                 date_nuclei= f'{wordsList[0]} {wordsList[1]}'
                 date= dict.fromkeys(['date'], date_nuclei)
@@ -414,21 +402,14 @@ def brain_word_comprehension(data, record_id, HostAddress=EgoSettings.HostAddres
                 vulnerable_nuclei= wordsList[5]
                 vulnerable= dict.fromkeys(['vulnerable'], vulnerable_nuclei)
                 DIC.update(date)
-                print(f'DIC date  {DIC}')
                 DIC.update(name)
-                print(f'DIC name  {DIC}')
                 DIC.update(method)
-                print(f'DIC method  {DIC}')
                 DIC.update(severity)
-                print(f'DIC severity  {DIC}')
                 DIC.update(vulnerable)
-                print(f'dic {DIC}')
                 Nuclei_id = dict.fromkeys(['nuclei'], record_id)
                 Nuclei_id.update(DIC) 
                 certificateurlPost= f"{HostAddress}:{Port}/api/Nuclei/"
-
                 recs= json.dumps(Nuclei_id)
-                print('recs  ', certificateurlPost, recs)
                 if auth_token_json:
                     headers.update(auth_token_json)
                 postRecords = requests.post(certificateurlPost, data=(recs), headers=headers, verify=False)
@@ -674,18 +655,14 @@ def update_gnaw_control(sub_domain, ego_id, auth_token_json):
 
 
 def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
-
     # After registering and updating the agent
     agent_id = EgoSettings.egoAgentId 
 # Update the agent's checkin
     update_agent_checkin(agent_id, auth_token_json)
     responseEgo = responseEgo
     if responseEgo is None:
-        print("No empty egoAgent found.")
         return 'No empty egoAgent found.'
     else:
-        print("Updated egoAgent:", responseEgo)
-        print(responseEgo)
         NukeOut = []
         if type(responseEgo) == dict:
             print('dict')
@@ -699,7 +676,6 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
             try:
                 COMPLETED = response['Gnaw_Completed']
                 FAILED = response['failed']
-                print(COMPLETED)
                 if COMPLETED == True or FAILED == True:
                     continue
                 ScanGroupingProject= response["ScanGroupingProject"]
@@ -707,7 +683,6 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                 severity= response['severity']
                 NucleiScan= response['NucleiScan']
                 egoAgent = response['id']
-                print('severity', severity)
                 Ipv_Scan= response['Ipv_Scan']
                 LoopCustomersBool= response['LoopCustomersBool']
                 Customer_chunk_size= response['Customer_chunk_size']
@@ -720,14 +695,11 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                 CUSTOMERS= f"{HostAddress}:{Port}/api/customers/{customerId}"
                 BoneGnaw= []
                 if LoopCustomersBool == True:
-                    print('loops')
                     LoopCustomers= f"{HostAddress}:{Port}/api/customers/"
                     getRecords= get_request(LoopCustomers, auth_token_json)
                     rjsons= getRecords.json()
                     id_list= [i['id'] for i in rjsons]
                     RecordsCheck_chunks = split(id_list, Record_chunk_size)
-                    print('count', len(id_list))
-                    print('RecordsCheck_chunks', len(RecordsCheck_chunks))
                     chunkout=[]
                     for customerIdLoops in RecordsCheck_chunks:
                         print(customerIdLoops)
@@ -738,19 +710,15 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                             gnawTarget = (ScanGroupingProject.strip())
                             gnawTargets = (rjson['groupingProject'])
                             skipscan = rjson['skipScan']
-                            print('gnawTarget', gnawTarget)
-                            print('gnawTargets', gnawTargets)
                             if skipscan == True:
                                 continue
                             elif str(gnawTarget) == str(gnawTargets):
                                 RecordsStore= rjson["customerrecords"]
                                 FullDomainNameSeensIt= set()
                                 result = {}
-                                print('count', len(RecordsStore))
                                 headers = {"Content-type": "application/json", "Accept": "application/json"}
                                 Bool_Start_chunk_timeout= False
                                 if Bool_Start_chunk_timeout:
-                                    print('Bool_Start_chunk_timeout')
                                     time.sleep(chunk_timeout)
                                     continue
                                 else:
@@ -758,11 +726,10 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                                     Store= []
                                     for RecordsCheck in RecordsCheck_chunks:
                                         if OutOfScopeString is None:
-                            
                                             computations = [dask.delayed(worker_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json)]
                                             Store.extend(computations)
                                         elif OutOfScopeString not in RecordsCheck['subDomain']:
-                                            print(RecordsCheck['subDomain'])
+                                    
                                             continue
                                         else:
                                             computations = [dask.delayed(worker_func)(RecordsCheck, NucleiScan, severity, Global_Nuclei_CoolDown, Global_Nuclei_RateLimit, ego_id, HostAddress=EgoSettings.HostAddress, Port=EgoSettings.Port, Ipv_Scan=Ipv_Scan, auth_token_json=auth_token_json)]
@@ -772,10 +739,8 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                                     Nuke_responses = dask.compute(*Store, scheduler='threads', num_workers=workers)
                                     BoneGnaw.append(Nuke_responses)
                                     gnaw_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{response['id']}"
-                                    print(f"going to update gnawcontrols the task has been complete")
                                     dataPUt = {"Gnaw_Completed": True}
                                     recs = json.dumps(dataPUt)
-    
                                     headers = {"Content-type": "application/json", "Accept": "application/json"}
                                     if auth_token_json:
                                         headers.update(auth_token_json)
@@ -783,20 +748,18 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                                     response = request.json()          
                             else:
                                 print(gnawTarget == gnawTargets)
+                                pass
                     Nuke_responses = dask.compute(*BoneGnaw, scheduler='threads', num_workers=cpuCount)
                     NukeOut.append(Nuke_responses)
                     gnaw_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{response['id']}"
-                    print(f"going to update gnawcontrols the task has been complete")
                     dataPUt = {"Gnaw_Completed": True}
                     recs = json.dumps(dataPUt)
-    
                     headers = {"Content-type": "application/json", "Accept": "application/json"}
                     if auth_token_json:
                         headers.update(auth_token_json)
                     request = requests.patch(gnaw_url, data=recs, headers=headers, verify=False)
                     response = request.json()                    
                 else:
-                    print(CUSTOMERS)
                     getRecords= get_request(CUSTOMERS, auth_token_json)
                     rjson= json.loads(getRecords.content)
                     OutOfScopeString = rjson['OutOfScopeString']
@@ -806,9 +769,6 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                     RecordsCheck_chunks = list(Chunky(RecordsCheck, Record_chunk_size))
                     headers = {"Content-type": "application/json", "Accept": "application/json"}
                     workers = len(RecordsCheck_chunks)
-                    print('RecordsCheck_chunks', len(RecordsCheck_chunks))
-                    print('count', len(RecordsCheck))
-                    print('Record_chunk_size', Record_chunk_size)                
                     Store= []
                     for RecordsCheck in RecordsCheck_chunks:
                         if OutOfScopeString is None:
@@ -826,21 +786,16 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                     Nuke_responses = dask.compute(*Store, scheduler='threads', num_workers=workers)
                     NukeOut.append(Nuke_responses)
                     gnaw_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{response['id']}"
-                    print(f"going to update gnawcontrols the task has been complete")
                     dataPUt = {"Gnaw_Completed": True}
                     recs = json.dumps(dataPUt)
-    
                     headers = {"Content-type": "application/json", "Accept": "application/json"}
                     if auth_token_json:
                         headers.update(auth_token_json)
                     request = requests.patch(gnaw_url, data=recs, headers=headers, verify=False)
                     response = request.json()                    
             except Exception as E:
-                print('Exception')
-                print(E)  
                 traceback.print_exc()
                 gnaw_url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/GnawControl/{ego_id}"
-                print(f"going to update gnawcontrols the task has been complete")
                 dataPUt = {"failed": True}
                 recs = json.dumps(dataPUt)
                 headers = {"Content-type": "application/json", "Accept": "application/json"}
@@ -848,20 +803,15 @@ def gnaw(auth_token_json, responseEgo, responseAgent, return_dict):
                     headers.update(auth_token_json)
                 request = requests.patch(gnaw_url, data=recs, headers=headers, verify=False)
                 response = request.json()
-                print('done record ')
                 Nuke_responses  = None
         Nuke_responses=NukeOut
-        print(f'GNAW IS COMPLETE {Nuke_responses}')         
-
         # Prepare the URL and headers
         url = f"{EgoSettings.HostAddress}:{EgoSettings.Port}/api/EGOAgent/{agent_id}/"
         headers = {"Content-type": "application/json", "Accept": "application/json"}
         if auth_token_json:
             headers.update(auth_token_json)
-
         # Prepare the data with the scanning status
         data = {"scanning": False}
-
         # Send the PATCH request
         response = requests.patch(url, data=json.dumps(data), headers=headers, verify=False)
         print('done record ')
@@ -911,13 +861,14 @@ def update_engine(auth_token_json, return_dict):
                 pass
             else:
                 # If EgoSettings.egoAgent is not set, create a new EGOAgent instance
-                data = {}  # Add necessary data here
-                agent_response = create_EGOAgent(data, auth_token_json)
-                agent_id = agent_response.get('id')  # Assuming the response contains an 'id' key
-                # Update EgoSettings.egoAgent with the new agent's ID
-                EgoSettings.egoAgent = agent_id
-                # Remove special characters and spaces from the string
-                EgoSettings.egoAgent = re.sub(r'\W+', '', str(EgoSettings.egoAgent))
+                if not EgoSettings.egoAgent:
+                    data = {}  # Add necessary data here
+                    agent_response = create_EGOAgent(data, auth_token_json)
+                    agent_id = agent_response.get('id')  # Assuming the response contains an 'id' key
+                    # Update EgoSettings.egoAgent with the new agent's ID
+                    EgoSettings.egoAgent = agent_id
+                    # Remove special characters and spaces from the string
+                    EgoSettings.egoAgent = re.sub(r'\W+', '', str(EgoSettings.egoAgent))
 
                 # Update the GnawControl instance with the new agent's ID
                 ego_id = response.get('id')  # Assuming the response contains an 'id' key
@@ -934,8 +885,10 @@ def update_engine(auth_token_json, return_dict):
                 update_ClaimedControl(ego_id, agent_id, auth_token_json)
     return return_dict
 
+from queue import Queue
+
 if __name__ == "__main__":
-    processes = []
+    processes = Queue()
     cpuCount = 3  # Limit the number of processes to 3
     print(f'cpu {cpuCount}')
     auth_token_json = {"Authorization": f"Bearer {EgoSettings.api_accessKey}"}
@@ -946,19 +899,20 @@ if __name__ == "__main__":
 
     while True:
         # If there are less than cpuCount gnaw functions running, start a new one
-        if len(processes) < cpuCount:
+        if processes.qsize() < cpuCount:
             p = Process(target=update_engine, args=(auth_token_json, return_dict))
             p.start()
-            processes.append(p)
+            processes.put(p)
         else:
             # If there are cpuCount gnaw functions running, wait for one to finish
-            for p in processes:
-                p.join(120)  # Wait for the process to finish for 2 minutes
-                if not p.is_alive():
-                    processes.remove(p)
-                    # If the output of the gnaw function is 'Done', wait for 30 seconds
-                    if return_dict.get(p.pid) == 'Done':
-                        time.sleep(30)
-                    break
+            p = processes.get()
+            p.join(120)  # Wait for the process to finish for 2 minutes
+            if not p.is_alive():
+                # If the output of the gnaw function is 'Done', wait for 30 seconds
+                if return_dict.get(p.pid) == 'Done':
+                    time.sleep(30)
+            else:
+                # If the process is still alive, put it back in the queue
+                processes.put(p)
             # Sleep for a while to prevent CPU overload
             time.sleep(12)

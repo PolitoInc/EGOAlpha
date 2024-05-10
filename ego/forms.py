@@ -16,12 +16,12 @@ from ego.serializers import *
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['user', 'email']
+        fields = ['user', 'email', 'FastPassHost', 'FastPassPort']
 
 class AdminUserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['email', 'role']
+        fields = ['user', 'email', 'FastPassHost', 'FastPassPort']
 
 class TenantInvitationForm(forms.ModelForm):
     class Meta:
@@ -48,13 +48,14 @@ class CustomUserCreationForm(UserCreationForm):
 
 User = get_user_model()
 
-
 class SimpleCustomersFormCreate(forms.ModelForm):
+    FastPass = forms.BooleanField(required=False)
+
     class Meta:
         model = Customers
         fields = ['groupingProject', 'nameProject', 'nameCustomer', 'URLCustomer',
-                  'notes', 'OutOfScopeString', 'urlScope', 'outofscope', 'domainScope', 'Ipv4Scope', 'Ipv6Scope', 'skipScan']
-
+                  'notes', 'OutOfScopeString', 'urlScope', 'outofscope', 'domainScope', 'Ipv4Scope', 'Ipv6Scope', 
+                  'skipScan', 'FastPass']
 
 class create_egocontrol(forms.ModelForm):
     class Meta:
@@ -227,6 +228,21 @@ class customer_pk(forms.ModelForm):
 
 ### MantisData create 
 class MantisDataCreate(forms.ModelForm):
+    vulnCard_id = forms.ModelChoiceField(
+        queryset=VulnCard.objects.all(),
+        to_field_name='id',
+        label='VulnCard Name',
+        required=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['vulnCard_id'].label_from_instance = self.label_from_instance
+
+    @staticmethod
+    def label_from_instance(obj):
+        return obj.name
+
     class Meta:
         model = PythonMantis
         fields = [
@@ -257,7 +273,8 @@ class MantisDataCreate(forms.ModelForm):
             'google_dork',
             'tags',
             'tcpversioning'
-            ]
+        ]
+
 
 class create_mantisCardCreate(forms.ModelForm):
     class Meta:
@@ -283,7 +300,7 @@ class create_mantisCardCreate(forms.ModelForm):
             'pictures': forms.ClearableFileInput(attrs={'class': 'form-control', 'style': 'width: 750px;'}),
         }
 
-class create_mantiscontrol(forms.ModelForm):
+class create_mantisControl(forms.ModelForm):
     class Meta:
         model = MantisControls
         fields = [

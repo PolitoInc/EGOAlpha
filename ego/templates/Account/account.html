@@ -15,11 +15,15 @@
       {{ form.as_p }}
       <button type="submit">Save</button>
     </form>
-    <h3>User Details</h3>
-    <p>Username: {{ form.instance.user.username }}</p>
-    <p>Email: {{ form.instance.user.email }}</p>
-    <p>First name: {{ form.instance.user.first_name }}</p>
-    <p>Last name: {{ form.instance.user.last_name }}</p>
+<h3>User Details</h3>
+{% for user_profile in admin_users %}
+    <p>Username: {{ user_profile.user.username }}</p>
+    <p>Email: {{ user_profile.user.email }}</p>
+    <p>Role: {{ user_profile.role }}</p>
+    <p>FastPass Host: {{ user_profile.FastPassHost }}</p>
+    <p>FastPass Port: {{ user_profile.FastPassPort }}</p>
+{% endfor %}
+
     <!-- Add more fields as needed -->
   </div>
   <div>
