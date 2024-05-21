@@ -41,6 +41,7 @@ urlpatterns = [
     path('GnawControlBoard/delete/<pk>', GnawControlBoardDelete, name='GnawControlBoardDelete'),
     path('VulnBoards/', VulnBoards, name='VulnBoards'),
     path('VulnBoards/search/', VulnBoardsearch, name='VulnBoardsearch'),
+    path('VulnBoards/Delete/<pk>', VulnBoardDelete, name='VulnBoardDelete'),
     path('VulnsBoardChart/', VulnsBoardChart, name='VulnsBoardChart'),
     path('VulnsBoardChartPK/<pk>', VulnsBoardChartPK, name='VulnsBoardChartPK'),
     path('AliveOrDeadChartPk/<pk>', AliveOrDeadChartPk, name='AliveOrDeadChartPk'),

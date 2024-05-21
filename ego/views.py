@@ -860,35 +860,32 @@ def VulnBoardsearch(request):
     data = PythonMantis.objects.all()
     return TemplateResponse(request, f'Vulns/VulnTemplates.html', {"data":data})
 
+def VulnBoardDelete(request, pk):
+    Control = PythonMantis.objects.get(pk=pk)
+    Control.delete() 
+    return HttpResponseRedirect('/VulnBoards/search/')
+
 # create mantis controls
 @login_required
 def mantiscreate(request):
-    context ={}
+    context = {}
     mantis = PythonMantis.objects.all()
     cards = VulnCard.objects.all()
     form = MantisDataCreate()
-    formdata = MantisDataCreate()
     if request.method == 'GET':
         form = MantisDataCreate(request.POST or None)
-        context['form']=form
+        context['form'] = form
         return TemplateResponse(request, f'Vulns/VulnBoardCreate.html', {"mantis": mantis, "cards": cards, "form": form})
     if request.method == 'POST':
-        form = MantisDataCreate(request.POST or None)
-        dict_ = dict(request.POST)
-        json_ = json.dumps(dict_)
-        print(json_)
-        Name = dict_[('name')]
-        print(Name)
-        regex = r"(\w+)"
-        clean_name = re.findall(regex, str(Name))
-        filename = ''.join(clean_name)
-        f = open(f"./vulns/{filename}.json", "x")
-        f.write(json_)
-        f.close()
+        form = MantisDataCreate(request.POST)
         if form.is_valid():
-            form.save()
-        context['form']=form
+            mantis = form.save()
+        else:
+            print('FORM NOT VALID')
+            messages.error(request, 'Form is not valid.')
+        context['form'] = form
         return TemplateResponse(request, f'Vulns/VulnBoardCreate.html', {"mantis": mantis, "cards": cards, "form": form})
+
 
 @login_required
 def VulnBoardDeletePK(request, pk):

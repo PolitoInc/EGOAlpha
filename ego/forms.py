@@ -228,20 +228,7 @@ class customer_pk(forms.ModelForm):
 
 ### MantisData create 
 class MantisDataCreate(forms.ModelForm):
-    vulnCard_id = forms.ModelChoiceField(
-        queryset=VulnCard.objects.all(),
-        to_field_name='id',
-        label='VulnCard Name',
-        required=True
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['vulnCard_id'].label_from_instance = self.label_from_instance
-
-    @staticmethod
-    def label_from_instance(obj):
-        return obj.name
+    vulnCard_id = forms.ModelChoiceField(queryset=VulnCard.objects.all(), to_field_name="name")
 
     class Meta:
         model = PythonMantis

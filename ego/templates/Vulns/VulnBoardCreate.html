@@ -6,10 +6,13 @@
             Mantis Controlboard
 {% endblock %}
 {% block content %}
+{{cards}}
+{{mantis}}
+
         <div class="_Create">
-                <form action="/VulnBoard/create/0" method="POST">
+                <form action="/VulnBoard/create/" method="POST">
                 {% csrf_token %}
-.
+
 {% for field in form %}
                 <div class="form-group">
             <label for="{{ field.id_for_label }}" class="egolabel">

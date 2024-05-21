@@ -20,7 +20,7 @@
             
         </div>
         <div class="VulnCreationGrid">
-            <form action="{% url 'VulnBoardCreatePK' results.id  %}" method="post">
+            <form action="{% url 'mantiscreatePK' results.id  %}" method="post">
                 {% csrf_token %}
                 {# This will display the radio button HTML for you #}
                 {{ form.as_p }}
@@ -28,7 +28,5 @@
                 {# You'll need a submit button or similar here to actually send the form #}
             </form>
         </div>
-
-
     </div>
  {% endblock %}
