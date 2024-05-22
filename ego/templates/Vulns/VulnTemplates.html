@@ -15,11 +15,11 @@
             <a href="/VulnBoard/create/{{ res.id}}">{{ res.id}}</a></br>
             {{ res.name}}</br>
             {{ res.vulnCard_id}}</br>
-<form method="POST" action="{% url 'VulnBoardsearch' %}">
-    {% csrf_token %}
-    <button type="submit">Yes, delete</button>
-</form>
-
+        <form method="POST" action="{% url 'VulnBoardDelete' %}">
+            {% csrf_token %}
+  
+          <button type="submit">Yes, delete</button>
+        </form>
         </p>
     {% endfor %}
 {% endblock %}
